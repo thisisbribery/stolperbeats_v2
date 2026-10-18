@@ -1,0 +1,2233 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stolperbeats Visualiser</title>
+<script>try{ if(localStorage.getItem("stolperbeats-shuffle-map:theme")==="light") document.documentElement.setAttribute("data-theme","light"); }catch(e){}</script>
+<style>
+:root{
+  --bg:#f5f4f0;--panel:#ffffff;--text:#1a1a19;--muted:#68665f;--line:#dcd9d1;--grid:#e9e7e0;
+  --beat:#9a978d;--slot:#c9c5ba;--ghost:#a9a69c;--late:#cf3426;--early:#2c67cf;--on:#1a1a19;
+  --chip:#efede7;--accent:#cf3426;--accent-ink:#fff;--track:#e3e0d8;--ok:#2f8f4e;--warn:#b7791f;
+  --orange:#e8590c;--green:#1f9d55;--green-soft:#e3f4ea;--green-ink:#fff;--empty:#d6d3ca;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#10100f;--panel:#1a1a18;--text:#ecebe6;--muted:#9c9a90;--line:#33322d;--grid:#262521;
+    --beat:#76746b;--slot:#45443e;--ghost:#605e57;--late:#ff6a5c;--early:#6d9fff;--on:#ecebe6;
+    --chip:#25241f;--accent:#ff5546;--accent-ink:#fff;--track:#2c2b27;--ok:#5ccf83;--warn:#e9b04f;
+    --orange:#ff8a3d;--green:#2fbf6b;--green-soft:#173524;--green-ink:#08140d;--empty:#3a3934;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10100f;--panel:#1a1a18;--text:#ecebe6;--muted:#9c9a90;--line:#33322d;--grid:#262521;
+  --beat:#76746b;--slot:#45443e;--ghost:#605e57;--late:#ff6a5c;--early:#6d9fff;--on:#ecebe6;
+  --chip:#25241f;--accent:#ff5546;--accent-ink:#fff;--track:#2c2b27;--ok:#5ccf83;--warn:#e9b04f;
+  --orange:#ff8a3d;--green:#2fbf6b;--green-soft:#173524;--green-ink:#08140d;--empty:#3a3934;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,sans-serif}
+main{max-width:1060px;margin:0 auto;padding:36px 16px 72px}
+h1{font-size:30px;line-height:1.15;margin:0 0 8px;letter-spacing:-.01em}
+h2{font-size:17px;margin:0}
+p{margin:0 0 12px}
+.lede{color:var(--muted);max-width:760px;margin-bottom:24px}
+.mono{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:.92em}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:20px}
+
+/* module-style control panel */
+.panel{display:grid;grid-template-columns:1fr 1fr;grid-template-areas:"timing feel" "knob side" "readout readout";gap:18px 32px;align-items:center}
+#timingrow{grid-area:timing} #feelrow{grid-area:feel} .knob{grid-area:knob} .side{grid-area:side} .readout{grid-area:readout}
+.ctl-label{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.knob{min-width:220px}
+.knob input{width:100%;margin:0;-webkit-appearance:none;appearance:none;background:transparent;height:28px;cursor:pointer}
+.knob input::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:var(--track)}
+.knob input::-moz-range-track{height:6px;border-radius:3px;background:var(--track)}
+.knob input::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--accent);border:3px solid var(--panel);box-shadow:0 0 0 1px var(--accent);margin-top:-8px}
+.knob input::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--accent);border:3px solid var(--panel);box-shadow:0 0 0 1px var(--accent)}
+.detents{display:flex;justify-content:space-between;padding:0 3px;margin-top:2px}
+.detents span{width:16px;display:flex;justify-content:center;white-space:nowrap;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;cursor:pointer}
+.detents span.on{color:var(--accent);font-weight:700}
+.side{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.tempo{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted)}
+.tempo input{width:130px;accent-color:var(--accent)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{border:1px solid var(--line);background:var(--chip);color:var(--text);border-radius:8px;padding:7px 14px;font:inherit;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.btn[aria-pressed=true]{border-color:var(--text)}
+.btn svg{width:11px;height:11px;fill:currentColor}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:14px;font-weight:600;cursor:pointer;font-variant-numeric:tabular-nums}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed=true]{background:var(--text);color:var(--panel)}
+.kitlabel{font-size:14px;color:var(--text);font-weight:600}
+
+/* readout: fixed geometry so switching Timing never moves the grid */
+.readout{grid-column:1/-1;display:grid;grid-template-columns:190px 1fr 120px 120px;gap:18px;border-top:1px solid var(--line);padding-top:14px}
+.ro-k{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.ro-v{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;line-height:1.4;height:2.8em;font-size:14px}
+.ro-v .sub{color:var(--muted)}
+
+/* beat pickers */
+.barhead{display:flex;align-items:baseline;gap:8px;margin-bottom:12px;min-width:0}
+.status{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.pickers{display:flex;gap:14px;align-items:stretch;flex-wrap:wrap;margin-bottom:14px}
+.presets{border:1px solid var(--line);border-radius:10px;padding:8px 12px 12px;margin:0;flex:1 1 520px;min-width:0}
+.presets legend{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:0 6px}
+.beats{display:flex;flex-wrap:wrap;gap:6px}
+.bbtn{border:1px solid var(--line);background:transparent;color:var(--text);border-radius:999px;padding:5px 12px;font:inherit;font-size:13px;cursor:pointer}
+.bbtn[aria-pressed=true]{background:var(--text);border-color:var(--text);color:var(--panel)}
+.bbtn .n{color:var(--muted);margin-right:4px;font-variant-numeric:tabular-nums}
+.bbtn[aria-pressed=true] .n{color:inherit;opacity:.6}
+.mine-box{display:flex;flex-direction:column;justify-content:center;gap:8px;align-items:flex-start}
+.mine{border:1.5px solid var(--green);background:var(--green-soft);color:var(--green);border-radius:999px;padding:8px 18px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.02em}
+.mine[aria-pressed=true]{background:var(--green);color:var(--green-ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--green) 25%,transparent)}
+.clear{border:0;background:transparent;color:var(--muted);font:inherit;font-size:13px;cursor:pointer;padding:0 4px;text-decoration:underline;text-underline-offset:2px}
+
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.scroll svg{display:block;width:100%;min-width:680px;height:auto}
+#bar .mute:focus-visible rect{stroke:var(--accent);stroke-width:2}
+#bar{cursor:crosshair;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.hint{font-size:13px;color:var(--muted);margin:6px 0 0}
+
+table{border-collapse:collapse;width:100%;font-size:14px;margin-top:12px}
+th,td{text-align:left;padding:7px 10px;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+th{font-weight:600;color:var(--muted);font-size:12px;letter-spacing:.04em;text-transform:uppercase;border-top:0}
+td.late{color:var(--late)} td.early{color:var(--early)}
+
+.prov{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.prov ul{margin:0;padding-left:18px;color:var(--muted);font-size:14px}
+.prov li{margin-bottom:6px}
+.prov h3{font-size:14px;margin:0 0 8px}
+.ok{color:var(--ok)} .warn{color:var(--warn)}
+.prov .wide{grid-column:1/-1;padding-top:16px;border-top:1px solid var(--line)}
+
+/* Feel: backlit buttons in the manual's colours */
+.tilerow{min-width:0;align-self:start}
+.feels{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.feel-item{display:flex;flex-direction:column;gap:7px;min-width:0}
+.lampbtn{width:100%;border-radius:6px;padding:7px 4px;font:inherit;font-size:12px;font-weight:800;letter-spacing:.12em;cursor:pointer;
+  color:var(--muted);border:1px solid color-mix(in srgb,var(--lamp) 35%,var(--line));
+  background:color-mix(in srgb,var(--lamp) 16%,var(--chip));
+  box-shadow:inset 0 1px 4px rgba(0,0,0,.28);transition:background .3s ease,box-shadow .3s ease}
+.tiles{display:grid;grid-template-columns:repeat(2,auto);gap:6px}
+.tile{border-radius:3px;padding:6px 12px;letter-spacing:.08em;width:auto}
+.linear-desc{font-size:12.5px;line-height:1.35;color:var(--muted);margin:0;max-width:340px;min-height:2.7em}
+.lampbtn:hover{background:color-mix(in srgb,var(--lamp) 26%,var(--chip))}
+.lampbtn[aria-pressed=true]{color:#141414;border-color:color-mix(in srgb,var(--lamp) 70%,#000);
+  background:radial-gradient(ellipse at 50% 40%,color-mix(in srgb,var(--lamp) 45%,#fff) 0%,var(--lamp) 60%,color-mix(in srgb,var(--lamp) 82%,#000) 100%);
+  box-shadow:0 0 16px 1px color-mix(in srgb,var(--lamp) 55%,transparent),inset 0 0 10px rgba(255,255,255,.35)}
+.row-desc{margin:7px 0 0;font-size:12.5px;line-height:1.35;color:var(--muted);height:1.35em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tilerow .ctl-label{display:flex;gap:8px}
+.tilerow .bypass{margin-left:0}
+.tilerow.bypassed .feels,.tilerow.bypassed .timings{filter:grayscale(1);opacity:.4;transition:filter .9s ease,opacity .9s ease}
+/* Timing: Stolperbeats' four buttons, then the alt tables, each group captioned like a panel silkscreen */
+.timings{display:grid;grid-template-columns:1fr;gap:8px}
+.tgroup{min-width:0}
+.tbtns{display:grid;grid-template-columns:repeat(var(--cols),1fr);gap:8px}
+.tgroup.stolper .tbtns{--cols:4} .tgroup.alt .tbtns{--cols:5}
+.reslabel{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.morebtn .caret{font-size:9px;letter-spacing:0;margin-left:3px}
+.tcap{display:block;margin-top:6px;padding-top:3px;border-top:1px solid var(--line);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:center}
+.tilerow.bypassed .bypass{opacity:1}
+.legend i.rolltick{width:3px;height:12px;border-radius:1px;background:var(--text);opacity:.6;vertical-align:-2px}
+
+/* theme switch */
+.topbar{display:flex;justify-content:flex-end;margin:-12px 0 14px}
+.theme{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:999px;padding:5px 6px 5px 12px;font:inherit;font-size:13px;cursor:pointer}
+.theme .track{position:relative;width:38px;height:22px;border-radius:999px;background:var(--chip);border:1px solid var(--line)}
+.theme .knobdot{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--text);transition:transform .25s ease}
+:root[data-theme="light"] .theme .knobdot{transform:translateX(16px)}
+.theme svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+
+/* Hear straight: button eases to orange and breathes; the Shuffle control greys out over a soft orange glow */
+#ab{transition:background-color .9s ease,border-color .9s ease,color .9s ease}
+#ab[aria-pressed=true]{background:var(--orange);border-color:var(--orange);color:#fff;animation:abPulse 2.4s ease-in-out infinite}
+@keyframes abPulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--orange) 45%,transparent)}50%{box-shadow:0 0 0 7px color-mix(in srgb,var(--orange) 0%,transparent)}}
+.knob{position:relative}
+.knob>*{position:relative;z-index:1}
+.knob::before{content:"";position:absolute;inset:-10px -14px;border-radius:14px;z-index:0;pointer-events:none;opacity:0;
+  background:radial-gradient(ellipse at center,color-mix(in srgb,var(--orange) 30%,transparent),transparent 72%);transition:opacity .9s ease}
+.knob.bypassed::before{opacity:1;animation:glow 2.4s ease-in-out infinite}
+@keyframes glow{0%,100%{opacity:.45}50%{opacity:1}}
+.knob input,.knob .detents{transition:filter .9s ease,opacity .9s ease}
+.knob.bypassed input,.knob.bypassed .detents{filter:grayscale(1);opacity:.4}
+.bypass{color:var(--orange);font-weight:700;letter-spacing:.04em;opacity:0;transition:opacity .9s ease;margin-left:6px}
+.knob.bypassed .bypass{opacity:1}
+@media (prefers-reduced-motion:reduce){#ab[aria-pressed=true],.knob.bypassed::before{animation:none}}
+
+/* collapsible sources */
+.sources>summary{list-style:none;display:flex;align-items:center;gap:10px;cursor:pointer;font-size:15px}
+.sources>summary::-webkit-details-marker{display:none}
+.sources .chev{width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(-45deg);transition:transform .2s ease;flex:none;margin-right:2px}
+.sources[open] .chev{transform:rotate(45deg)}
+.sources .sum-sub{color:var(--muted);font-size:13px}
+.sources .prov{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+.about-body{margin-top:16px;padding-top:16px;border-top:1px solid var(--line);max-width:780px}
+.about-body p{color:var(--muted);font-size:14px}
+.about-body b{color:var(--text)}
+.disclaimer{grid-column:1/-1;margin:4px 0 0;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+
+@media (max-width:960px){
+  .readout{grid-template-columns:170px 1fr 110px 110px}
+}
+@media (max-width:900px){
+}
+@media (max-width:760px){
+  #timing .lampbtn{letter-spacing:.03em}
+  .morebtn .caret{display:none}
+  .panel{grid-template-columns:1fr;grid-template-areas:"timing" "feel" "knob" "side" "readout"}
+  .side{flex-direction:row;flex-wrap:wrap;align-items:center;gap:12px 16px}
+  .row-desc{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;height:2.7em}
+  .knob{min-width:0}
+  .readout{grid-template-columns:1fr 1fr;gap:12px 16px}
+  .ro-desc{grid-column:1/-1}
+  .ro-desc .ro-v{-webkit-line-clamp:3;height:4.2em}
+  .prov{grid-template-columns:1fr}
+  h1{font-size:25px}
+  table{table-layout:fixed;font-size:13px}
+  th,td{padding:7px 4px;overflow-wrap:anywhere}
+  th{font-size:11px;letter-spacing:0}
+}
+/* compact layout: Timings, Feels, the Swing knob and the grid on one screen; fixed heights so the grid never moves */
+main{padding-top:14px}
+.pagehead{display:grid;grid-template-columns:1fr auto;grid-template-areas:"title theme" "lede lede";align-items:center;gap:4px 16px;margin-bottom:10px}
+.pagehead h1{grid-area:title} .pagehead .theme{grid-area:theme} .pagehead .lede{grid-area:lede}
+
+.pagehead h1{font-size:24px;margin:0}
+.pagehead .lede{margin:0;font-size:12.5px;line-height:1.45;max-width:none}
+.dl{margin-left:auto;border:1px solid var(--line);background:var(--chip);color:var(--text);border-radius:6px;padding:1px 9px;font:inherit;font-size:11px;letter-spacing:.04em;text-transform:none;cursor:pointer;line-height:1.5}
+.dl:hover:not(:disabled){border-color:var(--text)}
+.dl:disabled{opacity:.4;cursor:not-allowed}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.barhead h2{font-size:15px}
+.card{padding:14px 16px;margin-bottom:10px}
+.panel{grid-template-columns:1.45fr 1fr;gap:10px 24px}
+.ctl-label{margin-bottom:6px}
+.timings{grid-template-columns:4fr 5fr;gap:6px 12px}
+.tbtns,.feels{gap:6px}
+.feels{grid-template-columns:repeat(4,1fr)}
+.lampbtn{font-size:11px;letter-spacing:.08em;padding:6px 2px}
+.tcap{margin-top:4px}
+.row-desc{margin-top:5px}
+.knob input{height:24px}
+.side{gap:8px}
+.readout{padding-top:10px;gap:14px}
+.barhead{flex-wrap:wrap;margin-bottom:4px;row-gap:6px}
+.barctl{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.barctl .kitlabel{font-size:12px;color:var(--muted);font-weight:600;margin-left:6px}
+.barctl .seg button{padding:4px 10px;font-size:13px}
+.barctl .tile{padding:4px 10px}
+.pickers{margin-bottom:6px;gap:10px;align-items:center}
+.presets{padding:0;border:0}
+.beats{gap:5px}
+.bbtn{font-size:12px;padding:2px 9px}
+.mine{padding:6px 14px;font-size:13px}
+/* Bar picker: Kick and Snare run 4 bars, each tab shows a mini map of that bar's Kick (top) and Snare (bottom) */
+.barsel{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:2px 0 4px}
+.barsel .kitlabel{font-size:12px;color:var(--muted);font-weight:600}
+.bartabs{display:inline-flex;gap:5px}
+.btab{position:relative;display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:3px 8px 3px 7px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;font-variant-numeric:tabular-nums}
+.btab svg{display:block}
+.btab .mk{fill:var(--muted);opacity:.22}
+.btab .mk.on{fill:var(--text);opacity:.8}
+.btab[aria-pressed=true]{border-color:var(--text);color:var(--text);box-shadow:inset 0 0 0 1px var(--text)}
+.btab[aria-pressed=true] .mk.on{opacity:1}
+.btab.playing::after{content:"";position:absolute;left:8px;right:8px;bottom:-4px;height:2px;border-radius:2px;background:var(--accent)}
+.follow{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--muted);cursor:pointer;user-select:none}
+.follow input{margin:0;accent-color:var(--accent)}
+.barnote{font-size:12px;color:var(--muted)}
+/* Pattern banks: bank chips, the 24 pattern slots with mini maps, and the load/save bar */
+#bankCard .bankbody{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+#bankCard .barhead{margin-bottom:8px}
+#bankCard .barhead .status{margin-left:0}
+.bankrow{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-bottom:8px}
+.bchip{border:1px solid var(--line);background:transparent;color:var(--text);border-radius:999px;padding:2px 10px;font:inherit;font-size:12px;cursor:pointer;font-variant-numeric:tabular-nums}
+.bchip[aria-pressed=true]{background:var(--text);border-color:var(--text);color:var(--panel)}
+.bankrow select{font:inherit;font-size:12px;background:var(--chip);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:1px 4px}
+.bankrow .kitlabel{font-size:12px;color:var(--muted);font-weight:600;margin-left:8px}
+/* SKETCH | MODULE switch, and the MODULE strip: Bank plus one encoder per track group, like the module's panel */
+.srcseg button{letter-spacing:.06em;font-size:11.5px!important}
+.srcseg button[data-src=module][aria-pressed=true]{background:var(--accent);color:#fff}
+.modstrip{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:2px 0 8px;min-height:34px}
+.modstrip[hidden]{display:none}
+.pickers[hidden]{display:none}
+.slotbar[hidden],.trows[hidden],.bankrow[hidden]{display:none}
+.encw{display:flex;align-items:center;gap:5px}
+.encw .kitlabel{font-size:12px;color:var(--muted);font-weight:600}
+.enc{display:inline-flex;align-items:stretch;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.enc button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:10px;padding:4px 6px;cursor:pointer}
+.enc button:hover{color:var(--text);background:var(--chip)}
+.enc .v{min-width:28px;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;font-size:14px;border-left:1px solid var(--line);border-right:1px solid var(--line);padding:3px 6px;cursor:ns-resize;outline:none}
+.enc .v:focus-visible{box-shadow:inset 0 0 0 2px var(--accent)}
+.enc.bank .v{min-width:60px}
+.modnote{font-size:12px;color:var(--muted)}
+/* Pattern banks panel: one row of 24 tiles per encoder */
+.trows{display:flex;flex-direction:column;gap:6px}
+.trow{display:grid;grid-template-columns:46px 1fr;gap:6px;align-items:center}
+.trow .tl{font-size:12px;font-weight:600;color:var(--text)}
+.tiles24{display:grid;grid-template-columns:repeat(24,minmax(0,1fr));gap:3px}
+.ptile{position:relative;border:1px solid var(--line);background:transparent;border-radius:5px;padding:2px 2px 3px;cursor:pointer;color:var(--muted);font:inherit;font-size:9.5px;font-weight:700;line-height:1.1;min-width:0;font-variant-numeric:tabular-nums;text-align:left}
+.ptile svg{display:block;width:100%;height:9px;margin-top:2px}
+.ptile .bg{fill:var(--muted);opacity:.14}
+.ptile .on{fill:var(--text);opacity:.85}
+.ptile[aria-pressed=true]{border-color:var(--text);color:var(--text);box-shadow:inset 0 0 0 1px var(--text)}
+@media (max-width:760px){ .tiles24{grid-template-columns:repeat(12,minmax(0,1fr))} .trow{grid-template-columns:1fr} }
+.slotbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}
+.slotbar .kitlabel{font-size:12px;color:var(--muted);font-weight:600;margin-left:4px}
+.sbtn{border:1px solid var(--line);background:var(--chip);color:var(--text);border-radius:999px;padding:4px 12px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.sbtn:hover:not(:disabled){border-color:var(--text)}
+.sbtn.save{border-color:var(--green);color:var(--green);background:var(--green-soft)}
+.sbtn:disabled{opacity:.4;cursor:not-allowed}
+.trk{display:inline-flex;gap:4px;flex-wrap:wrap}
+.trk button{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:6px;padding:1px 7px;font:inherit;font-size:12px;cursor:pointer}
+.trk button[aria-pressed=true]{background:var(--chip);color:var(--text);border-color:var(--text)}
+#bankMsg{min-height:1.4em;margin-top:6px}
+#bankMsg.bad{color:var(--orange)}
+.bankempty{color:var(--muted);font-size:13px;padding:14px 0}
+.sdhelp{margin-top:6px;font-size:13px;color:var(--muted)}
+.sdhelp summary{cursor:pointer;color:var(--text);font-weight:600}
+.sdhelp ol{margin:8px 0 6px 18px;padding:0}
+.sdhelp li{margin:3px 0}
+.sdhelp p{margin:4px 0 0}
+/* Firmware lab */
+#fwCard .fwbody{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+#fwCard.dragging{outline:2px dashed var(--accent);outline-offset:4px}
+.fwwarn{font-size:13px;color:var(--muted);border-left:3px solid var(--orange);padding:2px 0 2px 10px}
+.fwsteps{margin:10px 0 0 18px;padding:0;display:flex;flex-direction:column;gap:14px;font-size:14px}
+.fwsteps a{color:inherit}
+.fwrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:8px}
+.fwdrop{font-size:12px;color:var(--muted)}
+.fwrow .dl{margin-left:0}
+.fwinfo{font-size:13px;color:var(--muted);margin-top:6px}
+.fwinfo:empty{display:none}
+.fwinfo b{color:var(--text)}
+.fwinfo .ok{color:var(--ok)} .fwinfo .bad{color:var(--orange)}
+.fwslots{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:8px}
+.fwslot{border:1px solid var(--line);border-radius:8px;padding:8px}
+.fwslot .lbl{font-size:11px;letter-spacing:.08em;font-weight:700;color:var(--muted)}
+.fwslot select{width:100%;margin-top:4px;font:inherit;font-size:13px;background:var(--chip);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:3px 4px}
+.fwslot .meta{font-size:11.5px;color:var(--muted);margin-top:5px;font-variant-numeric:tabular-nums}
+.fwslot .meta .bad{color:var(--orange)}
+.fwslot.changed{border-color:var(--green)}
+.fwslot .aud{margin-top:6px}
+.fwlog{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:12px;background:var(--chip);border:1px solid var(--line);border-radius:6px;padding:8px;white-space:pre-wrap;word-break:break-all;margin:6px 0 0;max-height:220px;overflow:auto}
+#fwProg{width:100%;margin-top:8px;height:10px}
+@media (max-width:760px){ .fwslots{grid-template-columns:repeat(2,minmax(0,1fr))} }
+/* VISUALISER | CREATOR switch, and the timing creator, which takes the Timing row's place at the same size */
+.pagehead{grid-template-columns:1fr auto auto;grid-template-areas:"title mode theme" "lede lede lede"}
+.pagehead .modesw{grid-area:mode}
+.modesw button{font-size:11.5px;letter-spacing:.06em;padding:6px 12px}
+.modesw button[data-mode="1"][aria-pressed=true]{background:var(--mine);color:#06201e}
+:root{--mine:#2bb5ae;--amber:#e09a1c} :root[data-theme="dark"]{--mine:#3fd0c9;--amber:#ffb627}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--mine:#3fd0c9;--amber:#ffb627}}
+/* the half-bar card glows amber in the visualiser and teal in the creator, where it's the editor */
+#halfCard{--hl:var(--amber);border:1.5px solid var(--hl);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--hl) 35%,transparent),0 0 16px 1px color-mix(in srgb,var(--hl) 38%,transparent),inset 0 0 12px color-mix(in srgb,var(--hl) 10%,transparent);
+  transition:border-color .4s ease,box-shadow .4s ease}
+body.creating #halfCard{--hl:var(--mine)}
+.halfhead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.halfsub{font-size:13px;font-weight:600;color:var(--mine)}
+body:not(.creating) .halfsub{display:none}
+#creatorrow{grid-area:timing;height:133px;display:flex;flex-direction:column;gap:6px;min-width:0}
+body:not(.creating) #creatorrow,body.creating #timingrow{display:none}
+#creatorrow .ctl-label{display:flex;align-items:center;gap:6px;margin-bottom:0;color:var(--mine);font-weight:700}
+.cacts{margin-left:auto;display:flex;align-items:center;gap:6px}
+.cacts .dl{margin-left:0}
+.cname{width:70px;border:1px solid var(--line);background:var(--chip);color:var(--text);border-radius:6px;padding:1px 7px;font:600 12px/1.5 ui-monospace,"SF Mono",Menlo,monospace;letter-spacing:.1em;text-transform:uppercase}
+.cname:focus{outline:none;border-color:var(--mine)}
+.crow{display:flex;align-items:center;gap:8px;min-width:0;height:26px}
+.crow .seg button{font-size:11.5px;padding:3px 9px;letter-spacing:.03em;white-space:nowrap}
+.crow .dl,.cacts .dl{white-space:nowrap}
+.crow .seg button[aria-pressed=true]{background:var(--mine);color:#06201e}
+.csel{background:var(--chip);color:var(--text);border:1px solid var(--line);border-radius:6px;font:inherit;font-size:12px;padding:2px 4px;height:24px}
+.cbadge{margin-left:auto;font-size:11px;font-weight:700;letter-spacing:.05em;border:1px solid var(--ok);color:var(--ok);border-radius:999px;padding:1px 9px;white-space:nowrap}
+.cbadge.warn{border-color:var(--warn);color:var(--warn)}
+#cMsg{margin-top:auto}
+#cMsg.flash{color:var(--mine)} #cMsg.bad{color:var(--late)}
+#beat.editing{touch-action:none;user-select:none;-webkit-user-select:none}
+#beat:focus-visible{outline:2px solid var(--mine);outline-offset:2px;border-radius:6px}
+#tbl tr.cur td{background:color-mix(in srgb,var(--mine) 12%,transparent)}
+#tbl td.lens{letter-spacing:.02em}
+@media (max-width:760px){ #creatorrow{height:auto} .crow{flex-wrap:wrap;height:auto} .pagehead{grid-template-areas:"title title theme" "mode mode mode" "lede lede lede"} }
+@media (max-width:900px){
+  .timings{grid-template-columns:1fr}
+  .feels{grid-template-columns:repeat(4,1fr)}
+}
+@media (max-width:760px){
+  .panel{grid-template-columns:1fr}
+  .barctl{margin-left:0}
+}
+</style>
+</head>
+<body>
+<main>
+  <header class="pagehead">
+    <h1>Stolperbeats visualiser</h1>
+    <p class="lede">A visualiser and emulator of the MSM Stolperbeats module. See and hear exactly where its Timings put each hit, program its pattern banks, and try alt timing tables on your own module with the Firmware lab. Unofficial, for educational purposes only.</p>
+    <div class="seg modesw" id="modeSw" role="group" aria-label="Page mode"><button data-mode="0" aria-pressed="true">VISUALISER</button><button data-mode="1" aria-pressed="false" title="Make your own Timing table">CREATOR</button></div>
+    <button class="theme" id="theme" aria-label="Switch to light mode">
+      <span id="themeLabel">Dark</span>
+      <span class="track" aria-hidden="true"><span class="knobdot"></span></span>
+    </button>
+  </header>
+
+  <section class="card panel" aria-label="Controls">
+    <div class="tilerow" id="timingrow">
+      <div class="ctl-label">Timing<span class="bypass" aria-hidden="true">· STRAIGHT</span><button class="dl" id="dlTables">Download tables</button></div>
+      <div class="timings" id="timing" role="group" aria-label="Timing"></div>
+      <p class="row-desc" id="timingDesc"></p>
+    </div>
+    <div class="tilerow" id="creatorrow" role="group" aria-label="Timing creator">
+      <div class="ctl-label">Timing creator
+        <span class="cacts">
+          <input id="cName" class="cname" maxlength="5" placeholder="NAME" aria-label="Name, up to 5 letters or numbers" spellcheck="false" autocomplete="off">
+          <button class="dl" id="cSave">Save to visualiser</button>
+          <button class="dl" id="cDelete" hidden>Delete</button>
+          <button class="dl" id="cExport" title="Download the 7 rows as a .timing.json file">Export</button>
+          <button class="dl" id="cImport" title="Load a .timing.json, or a style's JSON from Download tables">Import</button>
+          <input type="file" id="cFile" accept=".json,application/json" hidden>
+        </span>
+      </div>
+      <div class="crow">
+        <span class="reslabel">Start from</span><select class="csel" id="cFrom" aria-label="Start from"></select>
+        <span class="reslabel">Beats</span><div class="seg" id="cLink" role="group" aria-label="Beats"><button data-v="1" title="Beat 2 copies beat 1, like Shake, Push, DEEP and CLSTR">Every beat</button><button data-v="0" title="Beat 1 and beat 2 differ, like Trip and Clave">Beat 1 ≠ 2</button></div>
+        <span class="reslabel">Snap</span><div class="seg" id="cSnap" role="group" aria-label="Snap"><button data-v="1" title="Snap to single ticks">Tick</button><button data-v="4" title="Snap to slots of 4 ticks: N/4 slots per beat, like Trip">Slot</button></div>
+      </div>
+      <div class="crow">
+        <span class="reslabel">Grid</span><div class="seg" id="cGrid" role="group" aria-label="Ticks per beat for this level"></div>
+        <button class="dl" id="cCopy" title="Make this level a copy of the one before">Copy previous level</button>
+        <span class="cbadge" id="cBadge"></span>
+      </div>
+      <p class="row-desc" id="cMsg"></p>
+    </div>
+    <div class="knob" id="knob">
+      <div class="ctl-label"><span id="knobName">Shuffle</span> <span id="shufv" class="mono" style="color:var(--text)">0</span><span class="bypass" aria-hidden="true">· STRAIGHT</span></div>
+      <input id="shuffle" type="range" min="0" max="6" step="1" value="0" aria-label="Shuffle amount, 0 to 6">
+      <div class="detents" id="detents"></div>
+    </div>
+    <div class="side">
+      <label class="tempo">Tempo <input id="bpm" type="range" min="60" max="160" value="90"><span id="bpmv" class="mono">90 bpm</span></label>
+      <div class="row">
+        <button class="btn" id="play" aria-pressed="false"><svg viewBox="0 0 10 10"><path id="playIcon" d="M2 1l7 4-7 4z"/></svg><span>Play</span></button>
+        <button class="btn" id="ab" aria-pressed="false">Hear straight</button>
+      </div>
+    </div>
+    <div class="tilerow" id="feelrow">
+      <div class="ctl-label">Feel<span class="bypass" aria-hidden="true">· STRAIGHT</span></div>
+      <div class="feels" id="feels" role="group" aria-label="Feel"></div>
+      <p class="row-desc" id="feelDesc"></p>
+    </div>
+    <div class="readout" aria-live="polite">
+      <div><span class="ro-k">Timing</span><span class="ro-v" id="roMode"></span></div>
+      <div class="ro-desc"><span class="ro-k">What it does</span><span class="ro-v" id="roDesc"></span></div>
+      <div><span class="ro-k">Resolution</span><span class="ro-v mono" id="roRes"></span></div>
+      <div><span class="ro-k">Largest shift</span><span class="ro-v mono" id="roMax"></span></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="barhead"><h2 id="barTitle">Bar 1 of 4</h2><span class="status" id="status"></span>
+      <div class="barctl">
+        <div class="seg srcseg" id="srcSeg" role="group" aria-label="What the grid plays"><button data-src="sketch" aria-pressed="true" title="Presets and your own beat">SKETCH</button><button data-src="module" aria-pressed="false" title="Your pattern banks, picked like the module: a bank, then a pattern per track">MODULE</button></div>
+        <button class="dl" id="dlMidi" title="Download all 4 bars as a MIDI file: what plays, with the Timing, Shuffle, Feel and Rolls. Muted tracks and hits Linear silences are left out.">Download MIDI</button>
+        <span class="kitlabel">Linear</span><div class="tiles" id="linear" role="group" aria-label="Linear"></div>
+        <span class="kitlabel">Kit</span><div class="seg" id="kits" role="group" aria-label="Drum kit"></div>
+      </div>
+    </div>
+    <p class="linear-desc" id="linearDesc" hidden></p>
+    <div class="pickers">
+      <fieldset class="presets">
+        <legend class="sr-only">Drum presets</legend>
+        <div class="beats" id="beats" role="group" aria-label="Drum presets"></div>
+      </fieldset>
+      <div class="mine-box">
+        <button class="mine" id="mine" aria-pressed="false">+ YOUR BEAT</button>
+        <button class="clear" id="clear">Clear your beat</button>
+      </div>
+    </div>
+    <div class="modstrip" id="modStrip" hidden></div>
+    <div class="barsel">
+      <span class="kitlabel">Bar</span>
+      <div class="bartabs" id="barTabs" role="group" aria-label="Bar shown on the grid"></div>
+      <label class="follow" title="While playing, the grid shows the bar that's playing. Pick a bar to stop following and edit it while the loop runs."><input type="checkbox" id="follow" checked> Follow</label>
+      <button class="dl" id="copyBar" title="Copy this bar's Kick and Snare to the other three bars">Copy to all bars</button>
+      <span class="barnote">Kick and Snare run 4 bars. Hats and Percs loop 1 bar under them.</span>
+    </div>
+    <div class="scroll"><svg id="bar" viewBox="0 0 1000 272" role="img" aria-label="One bar of the 4-bar pattern on six tracks. Click or drag to place hits."></svg></div>
+    <div class="legend">
+      <span><i style="background:var(--on)"></i>on the grid</span>
+      <span><i style="background:var(--late)"></i>pushed late</span>
+      <span><i style="background:var(--early)"></i>pulled early</span>
+      <span><i style="border:1.5px solid var(--ghost)"></i>where the straight 16th would be</span>
+      <span><i class="rolltick"></i>ratchets (Rolls)</span>
+      <span><i style="border:1.5px dashed var(--muted)"></i>silenced by Linear</span>
+    </div>
+    <p class="hint">Click anywhere to place a hit on the nearest step, or hold and drag to draw several. Start on a hit to erase instead. Use the M button beside a track to mute it. Pick a Bar tab to write Kick and Snare in bars 2 to 4.</p>
+  </section>
+
+  <details class="card sources" id="bankCard">
+    <summary><span class="chev" aria-hidden="true"></span><span><b>Pattern banks</b> <span class="sum-sub">· program the module's banks and load them through its SD card</span></span></summary>
+    <div class="bankbody">
+    <div class="barhead"><span class="status" id="bankStatus"></span>
+      <div class="barctl">
+        <button class="dl" id="bankImport" title="Open PatternBank files from your Stolperbeats SD card. You can pick several at once.">Import from SD</button>
+        <button class="dl" id="bankNew" title="Start an empty bank on the first free bank number">New bank</button>
+        <button class="dl" id="bankDl" title="Save this bank as its PatternBank file, ready to copy to the SD card">Download bank</button>
+        <button class="dl" id="bankZip" title="Save every bank here as PatternBank files in one zip">Download all</button>
+        <input type="file" id="bankFile" accept=".txt,text/plain" multiple hidden>
+      </div>
+    </div>
+    <div class="bankrow" id="bankTabs" role="group" aria-label="Banks"></div>
+    <div class="trows" id="trows"></div>
+    <div class="slotbar" id="sendBar">
+      <button class="sbtn save" id="sendSketch">Send sketch to bank</button>
+      <span class="kitlabel">Tracks</span><div class="trk" id="slotTracks" role="group" aria-label="Tracks to send"></div>
+      <button class="clear" id="sendUndo" hidden>Undo</button>
+    </div>
+    <p class="row-desc" id="bankMsg"></p>
+    <p class="hint">One row per track, each picking its own pattern: Kick and Snare (4 bars each), Hihat 1, Hihat 2, Perc 1 and Perc 2 (1 bar each). Click a tile to put that track on that pattern; it's the same as turning its picker in the MODULE strip above the grid. In MODULE mode, edits on the grid go straight into the bank. In SKETCH mode, Send sketch writes the beat on the grid into this bank at the numbers the rows show.</p>
+    <details class="sdhelp">
+      <summary>Getting banks onto the module</summary>
+      <ol>
+        <li>Press Stop on Stolperbeats, then power off the rack. The module writes its data to the card when it stops, so never swap files while it's on.</li>
+        <li>Take out the SD card and copy every file on it to your computer as a backup.</li>
+        <li>Copy the downloaded PatternBank files into the same folder as the card's own PatternBank files, replacing any with the same name. PatternBank000 is Bank 1, PatternBank004 is Bank 5.</li>
+        <li>Put the card back and power on.</li>
+        <li>A bank number the module hasn't used yet starts switched off. Hold either Bank button for 2 seconds, turn the Kick encoder to the bank and click to switch it on.</li>
+      </ol>
+      <p>Each file holds 24 patterns per track: Kick and Snare 4 bars each, the hats and percs 1 bar. The files store hits only, no accents or velocity. Banks you import or build here are kept in this browser until you remove them.</p>
+    </details>
+    </div>
+  </details>
+
+  <section class="card" id="halfCard">
+    <div class="halfhead"><h2 id="halfTitle">Half a bar up close: the firmware's 8-step cycle</h2><span class="halfsub">Use this section to shape the grid above: drag the steps and the bar follows.</span></div>
+    <div class="scroll"><svg id="beat" viewBox="0 0 1000 150" role="img" aria-label="Half a bar divided into ticks with the eight step positions"></svg></div>
+    <p class="hint" id="beatnote"></p>
+    <table id="tbl"></table>
+  </section>
+
+  <details class="card sources" id="fwCard">
+    <summary><span class="chev" aria-hidden="true"></span><span><b>Firmware lab</b> <span class="sum-sub">· build your own experimental firmware from the official file, and flash it</span></span></summary>
+    <div class="fwbody">
+      <p class="fwwarn"><b>Experimental, personal and educational use only.</b> This page never contains, stores or sends firmware. You bring the official file from Making Sound Machines, the page changes it in your browser, and hands it back. Not made, checked or supported by Making Sound Machines. You can always go back: flash the official file the same way.</p>
+      <ol class="fwsteps">
+        <li><b>Get the official firmware.</b> Download it from <a href="https://makingsoundmachines.com/firmware/" target="_blank" rel="noopener">makingsoundmachines.com/firmware</a>. It's named like <span class="mono">_MSM_stolperbeats_hw_rev4-163.bin</span>.
+          <div class="fwrow"><button class="sbtn" id="fwOpen" type="button">Open the .bin</button><span class="fwdrop">or drop it on this panel</span><input type="file" id="fwFile" accept=".bin,application/octet-stream" hidden></div>
+          <div class="fwinfo" id="fwInfo"></div></li>
+        <li><b>Pick your mods.</b> Choose what each Timing button plays. Factory keeps it as it is.
+          <div class="fwslots" id="fwSlots"></div>
+          <p class="hint" id="fwSlotNote"></p></li>
+        <li><b>Build.</b>
+          <div class="fwrow"><button class="sbtn save" id="fwBuild" type="button" disabled>Build firmware</button><button class="dl" id="fwRecipe" type="button" title="Save the mods you picked as a small .json file to share. It holds no firmware.">Save recipe</button><button class="dl" id="fwRecipeOpen" type="button" title="Load a recipe someone shared">Open recipe</button><input type="file" id="fwRecipeFile" accept=".json,application/json" hidden></div>
+          <div class="fwinfo" id="fwOut"></div></li>
+        <li><b>Flash.</b> Plug the module into your computer over USB. Hold <b>BOOT</b>, press and release <b>RESET</b>, then let go of BOOT. The module is now waiting for new firmware.
+          <div class="fwrow"><button class="sbtn" id="fwConnect" type="button">Connect</button><button class="sbtn save" id="fwFlash" type="button" disabled>Flash my build</button><button class="dl" id="fwRestore" type="button" disabled title="Put the official file you opened back on the module">Flash official file</button></div>
+          <progress id="fwProg" max="1" value="0" hidden></progress>
+          <div class="fwinfo" id="fwStatus"></div>
+          <details class="sdhelp"><summary>No Connect button, or rather use the command line</summary>
+            <p>Flashing from the page needs Chrome or Edge on a computer (WebUSB). Anywhere else, download your build and use <span class="mono">dfu-util</span>, the way the manual describes:</p>
+            <pre class="fwlog" id="fwCmd">sudo dfu-util -a 0 -s 0x08000000 -D your-build.bin</pre>
+            <p>Then press RESET to run it. On Windows, Chrome may need the WinUSB driver for the STM32 bootloader (Zadig can install it).</p>
+          </details></li>
+      </ol>
+    </div>
+  </details>
+
+  <details class="card sources about">
+    <summary><span class="chev" aria-hidden="true"></span><span><b>About</b> <span class="sum-sub">· what everything on this page is</span></span></summary>
+    <div class="about-body">
+      <p>Pick a Timing, turn the Shuffle control, and watch each hit get pushed off the straight 16th grid, then hear it. Click or drag on the grid to write your own beat.</p>
+      <p><b>Stolperbeats Timings.</b> Trip, Shake, Push and Clave, with all seven Shuffle settings, come from the step tables in firmware 163, and every hit is placed the same way the module places it. Like the module, a Shuffle or Timing change lands on the next beat; pattern, Feel and tempo changes land straight away.</p>
+      <p><b>Feels.</b> Tight, Rolls, Flam and Slop, as on the module.</p>
+      <p><b>Linear.</b> From the module: when tracks clash on a step, only the highest priority one plays.</p>
+      <p><b>Alt tables.</b> HOPP (MPC and Linn style 16th swing), DEEP (8ths and 16ths swinging at once), SQEZ (made in the creator: the "&amp;" and "a" squeeze toward the next beat), CLSTR (the "e", "&amp;" and "a" cluster on a tuplet grid, leaning late) and FOLD (every beat folds in toward the "&amp;"). Each is held in the module's own row format, whole ticks on 16 to 36 ticks per beat, so you can hear it here and then put it on a Timing button with the Firmware lab. DEEP, FOLD, CLSTR and SQEZ have run on a real module.</p>
+      <p><b>Download tables.</b> The button by the Timings saves the selected alt table as a zip: its Stolperbeats-format rows, the step positions at 96 ticks per beat, and a one-bar MIDI groove per level for Ableton (right-click a clip, Extract Groove(s)). It's off for the four factory Timings. No firmware is included.</p>
+      <p><b>Four bars.</b> Like the module, Kick and Snare run 4 bars (64 steps) and the hats and percs loop 1 bar (16 steps) under them. The Bar tabs pick which bar the grid shows and edits; each tab has a mini map of its Kick (top) and Snare (bottom). Follow keeps the grid on the bar that's playing; pick a tab while playing to stay on that bar and edit it while the loop runs. In bars 2 to 4 the hats and percs are dimmed because they're bar 1 repeating. Copy to all copies the shown bar's Kick and Snare into the other three.</p>
+      <p><b>SKETCH and MODULE.</b> The switch above the grid picks what it plays. SKETCH is the presets and your own beat. MODULE plays your pattern banks the way the module does: pick a Bank, then a pattern number for each of the six tracks. Edits go straight into the bank.</p>
+      <p><b>Pattern banks.</b> Import the PatternBank files from your Stolperbeats SD card, browse each track's 24 patterns, edit them in MODULE mode or send a SKETCH beat into a bank, and download the bank to copy onto the card. Files come out in exactly the module's own format, byte for byte. No banks are included with this page: bring your own from your card.</p>
+      <p><b>Firmware lab.</b> Build your own experimental firmware from the official file: give each Timing button a different table (factory, an alt table, or your own from the creator), then flash it over USB. The page never contains firmware. You bring the official file, and recipes let others rebuild the same mods from theirs.</p>
+      <p><b>Download MIDI.</b> The button above the grid saves all 4 bars exactly as they play, swing and all, so the groove survives on a straight DAW grid: every hit where the grid shows it, with the Timing, Shuffle, Feel and Rolls, accents as velocity, at the current tempo. Muted tracks and hits Linear silences are left out. It's four bars of GM drums (Kick 36, Snare 38, Hihat 1 42, Hihat 2 46, Perc 1 39, Perc 2 63) at 960 ticks per beat.</p>
+      <p><b>Creator.</b> The CREATOR switch at the top swaps the Timing row for a table maker, with the same grid, kits, Feels and playback. Start from a Timing or from straight, then drag the steps in the half-bar view while it plays. The Shuffle slider picks the level you're editing, and a level you haven't touched yet starts as a copy of the one before. Every Timing made here keeps to the module's rules: whole ticks, 16 to 36 ticks per beat in steps of 4, every step at least 1 tick, and the half bar's 8 lengths adding up to 2N. Save adds it to the alt tables, Export saves its 7 rows as a file, and Import loads one back. Saved Timings stay in this browser only, so export the ones you want to keep.</p>
+      <p>See Sources below for what's read from firmware and what's matched.</p>
+    </div>
+  </details>
+
+  <details class="card sources">
+    <summary><span class="chev" aria-hidden="true"></span><span><b>Sources</b> <span class="sum-sub">· what's read from the firmware, and what's matched</span></span></summary>
+    <div class="prov">
+    <div>
+      <h3 class="ok">✓ Read from the firmware code</h3>
+      <ul>
+        <li>Ticks per beat for each Shuffle setting: <span class="mono">0x08029948</span></li>
+        <li>Step lengths: Trip <span class="mono">0x08029788</span>, Shake <span class="mono">0x080297F8</span>, Push <span class="mono">0x08029868</span>, Clave <span class="mono">0x080298D8</span></li>
+        <li>SHUFFLE is clamped to 0 to 6, and the row is shuffle + 7 × timing (<span class="mono">0x080097E8</span>)</li>
+        <li>At boot, step lengths become running totals (<span class="mono">0x0800D430</span>)</li>
+        <li>Tick length = 60 × 48014 ÷ (bpm × ticks per beat) timer counts, which is exactly 1/N of a beat (<span class="mono">0x08003BB8</span>)</li>
+        <li>A step fires when the tick counter equals its running total. The first 8 totals replay every half bar (<span class="mono">0x08010E58</span>)</li>
+        <li>FEEL is 0 to 3 (Tight, Rolls, Flam, Slop) at <span class="mono">0x2401738C</span>. The firing code runs on every tick, not just on steps</li>
+        <li>Flam fires Kick and Snare one tick after their step. Slop does the same, and also holds Hihat 1 and Hihat 2 for a tick, but only on steps where Kick or Snare hits (<span class="mono">0x08011284</span>)</li>
+        <li>Linear (flag <span class="mono">0x24016ED2</span>, toggled by the Linear button) is applied at each step (<span class="mono">0x08011082</span>): Snare silences Kick and all hats and percs, Kick silences hats and percs, Hihat 2 silences Hihat 1, Perc 2 silences Perc 1. Hats and percs don't silence each other. This matches the manual's priority list</li>
+        <li>Rolls retrigger Hihat 2 until the next step: on every tick for Shuffle 0 and 3, otherwise on every second tick (row mask <span class="mono">0x01224489</span>)</li>
+        <li>A Shuffle or Timing change waits for the next beat: the new row is only taken at the start of a half bar or at its second beat (<span class="mono">0x08011BC8</span>). The player here does the same</li>
+      </ul>
+    </div>
+    <div>
+      <h3 class="warn">≈ Matched, not traced in code</h3>
+      <ul>
+        <li>Which table belongs to which button. The four tables sit in button order and match the manual's descriptions. Push and Clave are now confirmed on hardware: a private test build with DEEP and FOLD in the third and fourth tables played them from the PUSH and CLAVE buttons. Trip and Shake follow the same order.</li>
+        <li>Feel colours come from the manual. The firmware only switches one of four LEDs per button.</li>
+        <li>Trigger pulse length, and how the Feels appear on MIDI out, haven't been traced.</li>
+        <li>DEEP and FOLD (test build 164), CLSTR (165), and DEEP with SQEZ (166) have been tried on a real module, by ear. Nothing has been measured with instruments.</li>
+        <li>The 808, 909 and 606 kits are synthesised approximations, not samples.</li>
+        <li>Changes while playing. Steps fire in order and never twice. A Shuffle or Timing change keeps the current beat as it was and takes over from the next one.</li>
+        <li>Here Linear looks at the pattern, so a track muted with M still takes priority. The firmware's Linear reads the pattern arrays too, so this is likely the same on the module (not tested on hardware).</li>
+      </ul>
+    </div>
+    <div class="wide">
+      <h3 class="ok">✓ Alt tables: HOPP, DEEP, SQEZ, CLSTR and FOLD</h3>
+      <ul>
+        <li>Every alt table is held as the module holds its own: one ticks-per-beat value per level (16, 20, 24, 28, 32 or 36, all divisible by 4 so the Subdiv clock out stays even) and whole-tick step lengths whose half bar adds up to 2N. Level 0 is straight. Download tables gives the rows, and the Firmware lab writes them into a Timing button's table.</li>
+        <li>HOPP is MPC and Linn style 16th swing: every second 16th lands late, at 55.6, 56.3, 58.3, 62.5, 66.7 and 71.4% on grids of 36, 32, 24, 32, 36 and 28 ticks per beat. The last is Linn's 71% step. Background: Linn's 54/58/62/66/71 ladder (<a href="https://www.attackmagazine.com/features/interview/roger-linn-swing-groove-magic-mpc-timing/" style="color:inherit">Attack, Roger Linn interview</a>, MPC60 manual) and breakbeat swing medians near 54.5% (<a href="https://shamslab.psych.ucla.edu/wp-content/uploads/sites/57/2017/01/Frane_SwingInBreakbeats_2017.pdf" style="color:inherit">Frane 2017</a>).</li>
+        <li>DEEP swings at two levels: each beat's 8ths split 52 to 66.7%, then each 8th's two 16ths split 52 to 60% inside it, rounded to whole ticks on 36, 24, 36, 36, 36 and 32 ticks per beat. Downbeats stay; the gaps shrink across each beat.</li>
+        <li>SQEZ was made in the creator. It starts like CLSTR, then squeezes the "&amp;" and "a" up against the next downbeat, on 36, 20, 36, 32, 28 and 36 ticks per beat. Levels 5 and 6 have 2-tick steps.</li>
+        <li>CLSTR cuts each beat into n slots of 4 ticks (n = 9, 5, 9, 8, 7 and 9) and clusters the "e", "&amp;" and "a" mid-beat, shifting right and leaning late as the level rises, until at level 6 they jam against the next downbeat.</li>
+        <li>FOLD moves the "e" late and the "a" early, in toward the "&amp;", every beat, on 36, 20, 28, 20, 16 and 20 ticks per beat. Downbeats and every "&amp;" stay. Levels 5 and 6 have 2-tick steps.</li>
+        <li>An alt table takes over one Timing's 7 rows, so on the module it keeps that button's other behaviour: its accents, and which Shuffle levels roll on every tick. The Rolls here assume the alt table sits on the Trip button.</li>
+      </ul>
+    </div>
+    <p class="disclaimer"><b>Disclaimer.</b> This is an unofficial, independent educational project. It is not affiliated with, endorsed by, or supported by Making Sound Machines. Stolperbeats is designed and made by <a href="https://makingsoundmachines.com/stolperbeats/" style="color:inherit">Making Sound Machines</a>, and all rights in the module and its firmware remain theirs. The timing tables used here were read from the publicly available firmware 163 purely to illustrate how the shuffle works. No firmware is included in or distributed by this page. For anything official, see the Stolperbeats manual. The alt tables are not part of Stolperbeats.</p>
+  </div>
+  </details>
+</main>
+
+<script>
+const DATA = {"N": [16, 28, 36, 20, 24, 32, 36], "Trip": [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4], [8, 8, 8, 4, 8, 8, 8, 4, 8, 8, 8, 4, 8, 8, 8, 4], [8, 12, 8, 8, 8, 12, 8, 8, 8, 12, 8, 8, 8, 12, 8, 2], [4, 8, 4, 4, 4, 8, 4, 4, 4, 8, 4, 4, 4, 8, 4, 1], [4, 12, 4, 4, 4, 12, 4, 4, 4, 12, 4, 4, 4, 12, 4, 1], [4, 16, 8, 4, 4, 16, 8, 4, 4, 16, 8, 4, 4, 16, 8, 1], [4, 20, 8, 4, 4, 20, 8, 4, 4, 20, 8, 4, 4, 20, 8, 1]], "Shake": [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4], [8, 6, 8, 6, 8, 6, 8, 6, 8, 6, 8, 6, 8, 6, 8, 6], [11, 7, 11, 7, 11, 7, 11, 7, 11, 7, 11, 7, 11, 7, 11, 7], [6, 4, 6, 4, 6, 4, 6, 4, 6, 4, 6, 4, 6, 4, 6, 4], [7, 5, 7, 5, 7, 5, 7, 5, 7, 5, 7, 5, 7, 5, 7, 5], [10, 6, 10, 6, 10, 6, 10, 6, 10, 6, 10, 6, 10, 6, 10, 6], [12, 6, 12, 6, 12, 6, 12, 6, 12, 6, 12, 6, 12, 6, 12, 6]], "Push": [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4], [8, 7, 7, 6, 8, 7, 7, 6, 8, 7, 7, 6, 8, 7, 7, 6], [10, 9, 9, 8, 10, 9, 9, 8, 10, 9, 9, 8, 10, 9, 9, 8], [6, 5, 5, 4, 6, 5, 5, 4, 6, 5, 5, 4, 6, 5, 5, 4], [7, 6, 6, 5, 7, 6, 6, 5, 7, 6, 6, 5, 7, 6, 6, 5], [10, 8, 8, 6, 10, 8, 8, 6, 10, 8, 8, 6, 10, 8, 8, 6], [11, 9, 9, 7, 11, 9, 9, 7, 11, 9, 9, 7, 11, 9, 9, 7]], "Clave": [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4], [8, 8, 5, 8, 8, 5, 8, 6, 8, 8, 5, 8, 8, 5, 8, 6], [10, 12, 5, 10, 12, 5, 10, 8, 10, 12, 5, 10, 12, 5, 10, 8], [6, 6, 3, 6, 6, 3, 6, 4, 6, 6, 3, 6, 6, 3, 6, 4], [8, 7, 3, 8, 7, 3, 8, 4, 8, 7, 3, 8, 7, 3, 8, 4], [9, 11, 4, 9, 11, 4, 8, 8, 9, 11, 4, 9, 11, 4, 8, 8], [11, 12, 4, 10, 13, 4, 10, 8, 11, 12, 4, 10, 13, 4, 10, 8]]};
+const TIMINGS=[
+  {key:"Trip", blurb:"n-tuplet grooves", desc:"Uneven tuplet grooves where steps trip over each other."},
+  {key:"Shake",blurb:"long-short swing", desc:"Classic long-short swing on every pair of 16ths."},
+  {key:"Push", blurb:"makes time for the downbeat", desc:"Steps lean late, making room for each downbeat."},
+  {key:"Clave",blurb:"3:3:2 holds, the rest swings", desc:"3:3:2 anchors hold while the other steps swing."},
+  // Alt tables: plain module rows, the same shape as the factory tables, so the Firmware lab can put any of them on a
+  // Timing button. DEEP, FOLD, CLSTR and SQEZ have run on a real module (test builds 164 to 166).
+  {key:"HOPP", alt:true, blurb:"MPC / Linn 16th swing", desc:"MPC-style 16th swing on the module's own grids: every second 16th lands late."},
+  {key:"DEEP", alt:true, blurb:"two-level swing", desc:"8ths swing, then each 8th's two 16ths swing again inside it."},
+  {key:"SQEZ", alt:true, blurb:"squeezed into the next beat", desc:"Starts like CLSTR, then the & and a squeeze up against the next downbeat."},
+  {key:"CLSTR", alt:true, blurb:"n-tuplet clusters, leaning late", desc:"The e, & and a cluster mid-beat on an n-tuplet grid, then lean late."},
+  {key:"FOLD", alt:true, blurb:"every beat folds in toward the &", desc:"The e and a of every beat fold in toward the &. Downbeats stay."}
+];
+const isAlt=t=>!!TIMINGS.find(x=>x.key===t)?.alt;
+// Your own Timings from the creator (and the creator's draft): module rows too.
+const isMine=t=>!!TIMINGS.find(x=>x.key===t)?.mine;
+const isTable=t=>isAlt(t)||isMine(t); // styles held as MODULE rows rather than the factory DATA
+// Feel order is the firmware's FEEL value 0-3. Colours from the manual: orange, red, yellow, white.
+const FEELS=[
+  {key:"Tight",lamp:"#f39237",desc:"All six tracks shuffle together. No extra timing on top."},
+  {key:"Rolls",lamp:"#e8423a",desc:"Hihat 2 becomes a ratchet that retriggers until the next step."},
+  {key:"Flam", lamp:"#f5c542",desc:"Kick and Snare land one tick after their step."},
+  {key:"Slop", lamp:"#f4f1e6",desc:"Like Flam, plus hats a tick late where they hit with Kick or Snare."}
+];
+const FEEL_DELAY={Flam:["BD","SD"],Slop:["BD","SD","H1","H2"]}; // tracks fired on (running total + 1)
+// Slop only holds the hats on steps where Kick or Snare also hits; on other steps they fire on time (0x08011284).
+const SLOP_ONLY_WITH_KS=["H1","H2"];
+const ROLL_EVERY_TICK=0x01224489; // firmware row mask: rows that roll on every tick, the rest on even ticks
+// Six tracks in the module's order. Hihat 1 is closed, Hihat 2 is open (the manual's Linear priority lists HH2 as open).
+const LANES=[
+  {key:"BD",name:"Kick",r:11},{key:"SD",name:"Snare",r:10},
+  {key:"H1",name:"Hihat 1",r:6.5},{key:"H2",name:"Hihat 2",r:7.5},
+  {key:"P1",name:"Perc 1",r:8},{key:"P2",name:"Perc 2",r:9}
+];
+const KITS={
+  "808":{BD:"kick",SD:"snare",H1:"closed hat",H2:"open hat",P1:"clap",P2:"conga"},
+  "909":{BD:"kick",SD:"snare",H1:"closed hat",H2:"open hat",P1:"rimshot",P2:"low tom"},
+  "606":{BD:"kick",SD:"snare",H1:"closed hat",H2:"open hat",P1:"high tom",P2:"low tom"}
+};
+const ALL=[...Array(16).keys()], EIGHTHS=[0,2,4,6,8,10,12,14], except=(...x)=>ALL.filter(i=>!x.includes(i));
+// Example beats (step numbers 0-15). Illustrative only, not the module's banks.
+const BEATS=[
+  {name:"Boom bap",   BD:[0,7,10],         SD:[4,12],        H1:except(14),                     H2:[14],         P1:[11],           P2:[]},
+  {name:"Head nod",   BD:[0,6,10],         SD:[4,12,15],     H1:ALL,                            H2:[],           P1:[],             P2:[3,13]},
+  {name:"Lazy pocket",BD:[0,3,9,14],       SD:[4,12],        H1:[0,2,3,4,6,8,10,11,12,14],      H2:[7],          P1:[15],           P2:[]},
+  {name:"Halftime",   BD:[0,6,11],         SD:[8],           H1:except(14),                     H2:[14],         P1:[3,11],         P2:[13]},
+  {name:"House",      BD:[0,4,8,12],       SD:[4,12],        H1:[0,1,3,4,5,7,8,9,11,12,13,15],  H2:[2,6,10,14],  P1:[10],           P2:[]},
+  {name:"Funk",       BD:[0,3,6,10],       SD:[4,9,12],      H1:except(7),                      H2:[7],          P1:[14],           P2:[]},
+  {name:"Break",      BD:[0,2,10,11],      SD:[4,7,9,12,15], H1:[0,2,4,6,8,10,12],              H2:[14],         P1:[],             P2:[]},
+  {name:"Tresillo",   BD:[0,3,6,8,11,14],  SD:[4,12],        H1:EIGHTHS,                        H2:[],           P1:[0,3,6,10,12],  P2:[7,15]},
+  {name:"Trap",       BD:[0,3,10],         SD:[8],           H1:[0,2,4,6,7,8,10,12,14,15],      H2:[],           P1:[8],            P2:[]},  // half-time
+  {name:"Seven nine", BD:[0,7],            SD:[4,13],        H1:[0,2,4,7,9,11,13],              H2:[],           P1:[],             P2:[]},  // accents the 7+9 (2+2+3, 2+2+2+3) for PROG
+  {name:"Quarter trips",BD:[0,8],          SD:[4,12],        H1:[0,3,5,8,11,13],                H2:[],           P1:[],             P2:[3,11]}, // hats on TRIO's pinned steps
+  // Busier grooves with both Perc tracks working, to hear the per-track styles pull the layers apart
+  {name:"Afrobeat",   BD:[0,3,7,10],       SD:[4,9,12,14],   H1:except(6,14),                   H2:[6,14],       P1:[2,5,10,13],    P2:[0,3,6,8,11]},
+  {name:"Samba",      BD:[0,3,4,8,11,12],  SD:[6,14],        H1:ALL,                            H2:[],           P1:[0,2,5,7,8,10,13,15], P2:[3,7,11,15]},
+  {name:"Jungle",     BD:[0,2,10],         SD:[4,7,9,12,14], H1:[0,2,4,6,8,10,12,13,14],        H2:[11],         P1:[3,6,11,15],    P2:[1,5,8,13]},
+  {name:"Dembow",     BD:[0,4,8,12],       SD:[3,6,11,14],   H1:EIGHTHS,                        H2:[],           P1:[3,6,7,11,14,15], P2:[2,5,10,13]}
+];
+// The module's pattern lengths (manual, Pattern Edit): Kick and Snare run 4 bars (4 x 16 = 64 steps),
+// Hihat 1, Hihat 2, Perc 1 and Perc 2 run 1 bar (16 steps) that repeats under them.
+const BARS=4, LONG=new Set(["BD","SD"]), laneLen=l=>LONG.has(l)?16*BARS:16;
+// A 1-bar step list on a 4-bar track repeats in every bar.
+const toArr=(steps,len=16)=>{ const a=Array(len).fill(0); for(let b=0;b<len/16;b++) steps.forEach(i=>a[b*16+i]=1); return a; };
+const CUSTOM=BEATS.length, STORE="stolperbeats-shuffle-map:your-beat";
+const emptyPattern=()=>Object.fromEntries(LANES.map(L=>[L.key,Array(laneLen(L.key)).fill(0)]));
+// Saved beats from before the 4-bar change hold 16 Kick and Snare steps: repeat them across the 4 bars.
+function fitPattern(p){
+  if(!p||!LANES.every(L=>Array.isArray(p[L.key])&&(p[L.key].length===16||p[L.key].length===laneLen(L.key)))) return null;
+  const out={}; for(const L of LANES){ const a=p[L.key].map(v=>v?1:0), n=laneLen(L.key); out[L.key]=Array.from({length:n},(_,i)=>a[i%a.length]); }
+  return out;
+}
+let custom=emptyPattern();
+try{ const saved=fitPattern(JSON.parse(localStorage.getItem(STORE))); if(saved) custom=saved; }catch(e){}
+function saveCustom(){ try{ localStorage.setItem(STORE,JSON.stringify(custom)); }catch(e){} }
+// data holds the full tracks. pattern is a 16-step window onto them for one bar (barCtx): Kick and Snare show
+// that bar's 16 steps, the 1-bar tracks always show their one bar. Everything that reads pattern[lane][k]
+// (grid, Linear, Feels, Rolls, playback) works on whichever bar barCtx points at.
+let data={}, pattern={}, beatIdx=0, edited=false, barCtx=0, viewBar=0;
+// Set by anything that changes what plays (Timing, Shuffle, Feel, Linear, tempo, the grid, MODULE picks). While playing,
+// the scheduler picks it up within one tick and replans the rest of the current bar, so changes land straight away.
+let replanDue=false;
+const muted={};
+const isStep=p=>typeof p==="string"&&/^\d+$/.test(p);
+function windowOf(a){
+  return new Proxy(a,{
+    get(t,p){ if(p==="length") return 16; if(isStep(p)){ const k=+p; return k<16?t[(t.length>16?barCtx*16:0)+k]:undefined; } return t[p]; },
+    set(t,p,v){ if(isStep(p)&&+p<16){ t[(t.length>16?barCtx*16:0)+ +p]=v; return true; } t[p]=v; return true; }
+  });
+}
+function bindPattern(){ pattern={}; for(const L of LANES) pattern[L.key]=windowOf(data[L.key]); }
+function atBar(b,fn){ const was=barCtx; barCtx=b; try{ return fn(); } finally{ barCtx=was; } }
+// MODSRC: MODULE mode. The grid's tracks are the bank's own pattern arrays (see Pattern banks), so edits go
+// straight into the bank, like Pattern Edit on the module.
+const MODSRC=CUSTOM+1;
+function loadBeat(i){
+  beatIdx=i; edited=false;
+  if(i===CUSTOM) data=custom; // edits write straight into the saved slot
+  else { data={}; for(const L of LANES) data[L.key]=toArr(BEATS[i][L.key],laneLen(L.key)); }
+  bindPattern();
+}
+const beatName=()=>beatIdx===CUSTOM?"your beat":beatIdx===MODSRC?modName():BEATS[beatIdx].name;
+loadBeat(0);
+const state={timing:"Trip",shuffle:0,bpm:90,straight:false,kit:"808",feel:0,linear:0,creator:false};
+let cSel=null; // the creator's selected step (0-7) in the half-bar view
+// The alt tables in the module's own row format: whole ticks, 16 to 36 ticks per beat in steps of 4 (so the Subdiv
+// clock out, a pulse every 4 ticks, stays even), one ticks-per-beat value per level (the firmware keeps one per row).
+// Each level is [N, the tick of each of the 4 steps in a beat]; level 0 is always straight on 16.
+const MODULE={
+  HOPP:[[36,[0,10,18,28]],[32,[0,9,16,25]],[24,[0,7,12,19]],[32,[0,10,16,26]],[36,[0,12,18,30]],[28,[0,10,14,24]]],
+  DEEP:[[36,[0,10,19,28]],[24,[0,7,13,19]],[36,[0,11,21,29]],[36,[0,12,22,30]],[36,[0,13,23,31]],[32,[0,13,21,28]]], // test build 166 (Push)
+  SQEZ:[[36,[0,12,20,28]],[20,[0,8,12,16]],[36,[0,13,24,28]],[32,[0,18,21,28]],[28,[0,9,23,26]],[36,[0,21,31,34]]], // test build 166 (Clave)
+  // CLSTR: each beat cut into n slots of 4 ticks (n = 9, 5, 9, 8, 7, 9), the e, & and a clustered and leaning late
+  CLSTR:[[36,[0,12,20,28]],[20,[0,8,12,16]],[36,[0,16,24,28]],[32,[0,16,20,24]],[28,[0,16,20,24]],[36,[0,24,28,32]]], // test build 165
+  FOLD:[[36,[0,10,18,26]],[20,[0,6,10,14]],[28,[0,9,14,19]],[20,[0,7,10,13]],[16,[0,6,8,10]],[20,[0,8,10,12]]] // test build 164
+};
+const modN=(t,s)=>s===0?16:MODULE[t][s-1][0];
+// Linear: when several tracks hit on the same step, only the highest priority one in each chain plays.
+// The manual's two parallel chains, so a hat and a perc can still share a step.
+const LINEARS=[
+  {key:"Off",lamp:"#9c9a90",desc:"Every hit plays."},
+  {key:"On",lamp:"#9ad06b",chains:[["SD","BD","H2","H1"],["SD","BD","P2","P1"]],desc:"Snare beats Kick, both beat the hats and percs. Open hat beats closed, Perc 2 beats Perc 1."}
+];
+// True when Linear silences this track's hit on step k: a higher priority track in one of its chains also hits there.
+function linearMuted(lane,k){
+  const chains=LINEARS[state.linear].chains||[];
+  return chains.some(c=>c.includes(lane)&&c.slice(0,c.indexOf(lane)).some(l=>pattern[l][k]));
+}
+
+// Ticks per beat for a Timing at a Shuffle level: the firmware's per-row table, or the alt table's own grid.
+const res=(timing,s)=>isTable(timing)?modN(timing,s):DATA.N[s];
+const curRes=()=>res(state.timing,state.shuffle);
+const feelKey=()=>FEELS[state.feel].key;
+// The clock the Feels run on: the level's ticks, and its firmware row for the Rolls mask (row = shuffle + 7 × timing).
+// An alt table is assumed to take over one Timing's 7 rows, so its Rolls follow that group's slots in the mask.
+function feelClock(){
+  const s=state.shuffle, t=state.timing;
+  if(isTable(t)) return {N:modN(t,s),row:s};
+  return {N:DATA.N[s],row:s+7*TIMINGS.findIndex(x=>x.key===t)};
+}
+const rollsEveryTick=row=>row<25&&!!((ROLL_EVERY_TICK>>row)&1);
+// Bar tick each of the 16 steps fires on (4 × ticks per beat per bar).
+function positions(timing,s){
+  if(isTable(timing)){
+    if(s===0){ const N=modN(timing,s); return ALL.map(k=>k*N/4); }
+    const [N,cyc]=MODULE[timing][s-1], w=cyc.length; // one beat (4 steps) or a half bar (8 steps, from the creator)
+    return ALL.map(k=>Math.floor(k/w)*N*w/4+cyc[k%w]);
+  }
+  // Stolperbeats firmware: running totals pos[k]=sum(len[0..k-1]); the first 8 replay each half bar.
+  const row=DATA[timing][s], half=[0]; let acc=0;
+  for(let k=0;k<7;k++){ acc+=row[k]; half.push(acc); }
+  const N=DATA.N[s]; return half.concat(half.map(p=>p+2*N));
+}
+// Every track plays on the same grid on the module; kept per track so the Feels can hold some tracks a tick.
+const lanePositions=(timing,s,lane)=>positions(timing,s);
+const fmtTick=p=>Number.isInteger(p)?String(p):String(+p.toFixed(2));
+
+const NS="http://www.w3.org/2000/svg";
+function el(tag,attrs,parent){ const e=document.createElementNS(NS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); if(parent) parent.appendChild(e); return e; }
+const css=v=>`var(--${v})`;
+const fmtMs=ms=>Math.abs(ms)<0.05?"0 ms":(ms>0?"+":"−")+Math.abs(ms).toFixed(1)+" ms";
+
+// ---------- bar view ----------
+const bar=document.getElementById("bar"), X0=122, X1=984, BX=f=>X0+(X1-X0)*f;
+const laneY={}, BOT=260; LANES.forEach((L,i)=>laneY[L.key]=86+i*32); // tight lanes so the whole grid fits on screen
+const gSlots=el("g",{},bar), hits={};
+let hoverRing, gRoll;
+(function buildBar(){
+  for(let b=0;b<=4;b++){
+    el("line",{x1:BX(b/4),x2:BX(b/4),y1:24,y2:BOT,stroke:css("beat"),"stroke-width":b%4?1:1.6},bar);
+    if(b<4){ const t=el("text",{x:BX(b/4)+5,y:18,fill:css("muted"),"font-size":12},bar); t.textContent=`beat ${b+1}`; }
+  }
+  for(let k=0;k<16;k++){
+    if(k%4) el("line",{x1:BX(k/16),x2:BX(k/16),y1:52,y2:BOT,stroke:css("grid"),"stroke-width":1},bar);
+    const t=el("text",{x:BX(k/16),y:46,"text-anchor":"middle",fill:css("muted"),"font-size":11},bar); t.textContent=k+1;
+  }
+  el("line",{x1:X0,x2:X1,y1:60,y2:60,stroke:css("line"),"stroke-width":1},bar);
+  for(const L of LANES){
+    const y=laneY[L.key];
+    const lt=el("text",{x:6,y:y,fill:css("text"),"font-size":12,"font-weight":600},bar); lt.textContent=L.name;
+    const sub=el("text",{x:6,y:y+13,fill:css("muted"),"font-size":10},bar);
+    const mb=el("g",{class:"mute",role:"button",tabindex:0,"aria-pressed":"false","aria-label":`Mute ${L.name}`,style:"cursor:pointer"},bar);
+    const mtitle=el("title",{},mb); mtitle.textContent=`Mute ${L.name}`;
+    mb.rect=el("rect",{x:80,y:y-10,width:26,height:20,rx:5,"stroke-width":1.2},mb);
+    mb.txt=el("text",{x:93,y:y+4,"text-anchor":"middle","font-size":11,"font-weight":700},mb); mb.txt.textContent="M";
+    const toggleMute=()=>{ muted[L.key]=!muted[L.key]; drawBar(); };
+    mb.addEventListener("click",toggleMute);
+    mb.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggleMute(); } });
+    L.label=lt; L.sub=sub; L.mute=mb;
+    el("line",{x1:X0,x2:X1,y1:y,y2:y,stroke:css("grid"),"stroke-width":2},bar);
+    hits[L.key]=[];
+    for(let k=0;k<16;k++){
+      const g={};
+      g.empty=el("circle",{cy:y,r:3,fill:css("empty"),"pointer-events":"none"},bar);
+      g.ghost=el("circle",{cx:BX(k/16),cy:y,r:L.r-1,fill:"none",stroke:css("ghost"),"stroke-width":1.5,"pointer-events":"none"},bar);
+      g.link=el("line",{y1:y,y2:y,"stroke-width":2.5,"stroke-opacity":.5,"pointer-events":"none"},bar);
+      g.dot=el("circle",{cy:y,r:L.r,"pointer-events":"none"},bar);
+      hits[L.key].push(g);
+    }
+  }
+  gRoll=el("g",{"pointer-events":"none"},bar);
+  hoverRing=el("circle",{r:14,fill:"none",stroke:css("accent"),"stroke-width":2,"stroke-dasharray":"3 3",visibility:"hidden","pointer-events":"none"},bar);
+  bar.playhead=el("line",{x1:-9,x2:-9,y1:24,y2:BOT,stroke:css("accent"),"stroke-width":2,visibility:"hidden","pointer-events":"none"},bar);
+})();
+
+// Tick each step fires on for one track, in bar ticks (4N per bar). Flam/Slop add one Feel clock tick to their tracks.
+function laneTicks(lane){
+  const s=state.shuffle, N=curRes();
+  if(state.straight) return ALL.map(k=>k*N/4);
+  const d=(FEEL_DELAY[feelKey()]||[]).includes(lane)?N/feelClock().N:0;
+  const held=k=>!(feelKey()==="Slop"&&SLOP_ONLY_WITH_KS.includes(lane))||pattern.BD[k]||pattern.SD[k];
+  return lanePositions(state.timing,s,lane).map((p,k)=>p+(held(k)?d:0));
+}
+// Rolls: after a Hihat 2 step, retrigger on ticks up to (not including) the next step.
+function rollTicks(){
+  if(state.straight||feelKey()!=="Rolls") return [];
+  const N=curRes(), pos=lanePositions(state.timing,state.shuffle,"H2"), fc=feelClock(), every=fc.every??rollsEveryTick(fc.row);
+  const u=N/fc.N, snap=x=>Math.abs(x-Math.round(x))<1e-6?Math.round(x):x; // Feel clock ticks, in bar ticks
+  const out=[];
+  for(let k=0;k<16;k++){
+    if(!pattern.H2[k]||linearMuted("H2",k)) continue; // a step Linear silences doesn't start a roll
+    const end=snap((k<15?pos[k+1]:4*N)/u);
+    for(let t=Math.floor(snap(pos[k]/u))+1;t<end;t++) if(every||t%2===0) out.push({t:t*u,k});
+  }
+  return out;
+}
+function computeTargets(){ const N=curRes(), t={}; for(const L of LANES) t[L.key]=laneTicks(L.key).map(p=>p/(4*N)); return t; }
+const cloneT=o=>Object.fromEntries(Object.entries(o).map(([k,v])=>[k,v.slice()]));
+let target=computeTargets(), shown=cloneT(target), anim=null, animating=false;
+function drawRolls(){
+  gRoll.innerHTML="";
+  if(animating) return;
+  const N=curRes();
+  for(const [lane,list] of [["H2",rollTicks()]]){ const y=laneY[lane];
+    for(const r of list){
+      const x=BX(r.t/(4*N));
+      el("line",{x1:x,x2:x,y1:y-7,y2:y+7,stroke:css("text"),"stroke-width":2,"stroke-linecap":"round",opacity:muted[lane]?.2:.6},gRoll);
+    } }
+}
+function colorFor(d){ return Math.abs(d)<1e-6?css("on"):(d>0?css("late"):css("early")); }
+function drawBar(){
+  replanDue=true;
+  for(const L of LANES){
+    L.label.setAttribute("text-decoration",muted[L.key]?"line-through":"none");
+    L.label.setAttribute("opacity",muted[L.key]?.45:1);
+    L.sub.textContent=muted[L.key]?"muted":viewBar&&!LONG.has(L.key)?"1-bar loop":KITS[state.kit][L.key];
+    const m=!!muted[L.key];
+    L.mute.setAttribute("aria-pressed",String(m));
+    L.mute.rect.setAttribute("fill",m?css("orange"):css("chip"));
+    L.mute.rect.setAttribute("stroke",m?css("orange"):css("line"));
+    L.mute.txt.setAttribute("fill",m?"#fff":css("muted"));
+  }
+  for(const L of LANES) for(let k=0;k<16;k++){
+    const g=hits[L.key][k], on=pattern[L.key][k], f=shown[L.key][k], moved=Math.abs(f-k/16)>1e-6;
+    const c=colorFor(target[L.key][k]-k/16);
+    g.empty.setAttribute("cx",BX(f)); g.empty.setAttribute("visibility",on?"hidden":"visible");
+    const lin=on&&linearMuted(L.key,k), loop=viewBar&&!LONG.has(L.key)?.6:1; // bars 2-4: the 1-bar tracks are bar 1 repeating
+    g.dot.setAttribute("opacity",(muted[L.key]?.25:lin?.85:1)*loop);
+    g.dot.setAttribute("stroke",lin?c:"none"); g.dot.setAttribute("stroke-width",lin?1.5:0); g.dot.setAttribute("stroke-dasharray",lin?"3 2":"none");
+    g.dot.setAttribute("cx",BX(f)); g.dot.setAttribute("fill",lin?css("panel"):c); g.dot.setAttribute("visibility",on?"visible":"hidden");
+    g.ghost.setAttribute("visibility",on&&moved?"visible":"hidden");
+    g.link.setAttribute("x1",BX(k/16)); g.link.setAttribute("x2",BX(f)); g.link.setAttribute("stroke",c);
+    g.link.setAttribute("visibility",on&&moved?"visible":"hidden");
+  }
+  drawRolls();
+  if(hoverCell) placeHover(hoverCell);
+  drawBarTabs();
+}
+function drawSlots(){
+  gSlots.innerHTML="";
+  if(state.shuffle===0) return;
+  // Trip and the alt tables land on multiples of 4 ticks: N/4 slots per beat, N per bar.
+  const n=state.timing==="Trip"||isTable(state.timing)?curRes():0;
+  for(let j=0;n&&j<=n;j++) el("line",{x1:BX(j/n),x2:BX(j/n),y1:56,y2:64,stroke:css("slot"),"stroke-width":1.5},gSlots);
+}
+function retarget(){
+  replanDue=true;
+  target=computeTargets();
+  const from=cloneT(shown), t0=performance.now(), dur=260;
+  cancelAnimationFrame(anim);
+  if(document.hidden){ animating=false; shown=cloneT(target); drawBar(); return; }
+  animating=true;
+  const step=now=>{ const p=Math.min(1,(now-t0)/dur), e=1-Math.pow(1-p,3);
+    for(const L of LANES) shown[L.key]=from[L.key].map((f,k)=>f+(target[L.key][k]-f)*e);
+    if(p>=1) animating=false;
+    drawBar(); if(p<1) anim=requestAnimationFrame(step); };
+  anim=requestAnimationFrame(step);
+}
+
+// ---------- drawing on the grid: nearest step + nearest track, drag to paint ----------
+let paintValue=null, hoverCell=null;
+function svgPoint(e){ const p=bar.createSVGPoint(); p.x=e.clientX; p.y=e.clientY; return p.matrixTransform(bar.getScreenCTM().inverse()); }
+function cellAt(e){
+  const p=svgPoint(e), top=laneY[LANES[0].key]-24, bottom=laneY[LANES[LANES.length-1].key]+24;
+  if(p.x<X0-12||p.x>X1+16||p.y<top||p.y>bottom) return null;
+  let lane=LANES[0]; for(const L of LANES) if(Math.abs(laneY[L.key]-p.y)<Math.abs(laneY[lane.key]-p.y)) lane=L;
+  const sl=shown[lane.key]; let k=0; for(let i=1;i<16;i++) if(Math.abs(BX(sl[i])-p.x)<Math.abs(BX(sl[k])-p.x)) k=i;
+  return {lane:lane.key,k};
+}
+function placeHover(c){ hoverRing.setAttribute("cx",BX(shown[c.lane][c.k])); hoverRing.setAttribute("cy",laneY[c.lane]); hoverRing.setAttribute("visibility","visible"); }
+function setHover(c){ hoverCell=c; if(c) placeHover(c); else hoverRing.setAttribute("visibility","hidden"); }
+function paint(c){
+  if(pattern[c.lane][c.k]===paintValue) return;
+  pattern[c.lane][c.k]=paintValue;
+  if(beatIdx!==CUSTOM) edited=true;
+  drawBar();
+  if(paintValue&&!muted[c.lane]){ ensureAudio(); voice(c.lane,ctx.currentTime+0.005,c.k); }
+}
+bar.addEventListener("pointerdown",e=>{
+  const c=cellAt(e); if(!c) return;
+  e.preventDefault(); try{ bar.setPointerCapture(e.pointerId); }catch(err){}
+  paintValue=pattern[c.lane][c.k]?0:1; paint(c); setHover(c);
+});
+bar.addEventListener("pointermove",e=>{ const c=cellAt(e); setHover(c); if(paintValue!==null&&c) paint(c); });
+function endPaint(){ if(paintValue===null) return; paintValue=null; if(beatIdx===CUSTOM) saveCustom(); else if(beatIdx===MODSRC) bankEdited(); drawBeats(); }
+bar.addEventListener("pointerup",endPaint);
+bar.addEventListener("pointercancel",endPaint);
+bar.addEventListener("pointerleave",()=>{ if(paintValue===null) setHover(null); });
+
+// ---------- half-bar view ----------
+const beat=document.getElementById("beat"), B0=40, B1=960;
+function drawHalf(){
+  beat.innerHTML="";
+  const steps=8, s=state.shuffle, N=curRes(), span=steps*N/4, pos=positions(state.timing,s), BXh=t=>B0+(B1-B0)*t/span;
+  const slots=state.timing==="Trip"||isTable(state.timing); // these land on 4-tick slots: draw them taller
+  const y=74, H=40;
+  beat.setAttribute("viewBox","0 0 1000 150");
+  el("line",{x1:B0,x2:B1,y1:y,y2:y,stroke:css("line"),"stroke-width":1.5},beat);
+  for(let t=0;t<=span;t++){
+    const edge=t%N===0, major=slots&&t%4===0, h=edge?H:major?14:6;
+    el("line",{x1:BXh(t),x2:BXh(t),y1:y-h,y2:y+h,stroke:edge?css("beat"):major?css("slot"):css("grid"),"stroke-width":edge?1.6:1},beat);
+  }
+  for(let k=0;k<steps;k++){
+    const st=k*N/4, p=pos[k], d=p-st, c=colorFor(d/N);
+    if(Math.abs(d)>1e-9){
+      el("circle",{cx:BXh(st),cy:y,r:9,fill:"none",stroke:css("ghost"),"stroke-width":1.5},beat);
+      el("line",{x1:BXh(st),x2:BXh(p),y1:y,y2:y,stroke:c,"stroke-width":3,"stroke-opacity":.5},beat);
+    }
+    el("circle",{cx:BXh(p),cy:y,r:11,fill:c},beat);
+    if(state.creator&&s&&k===cSel) el("circle",{cx:BXh(p),cy:y,r:16,fill:"none",stroke:css("mine"),"stroke-width":2,"stroke-dasharray":"3 3"},beat);
+    if(state.creator&&s&&k%4===0) el("circle",{cx:BXh(p),cy:y,r:15,fill:"none",stroke:css("muted"),"stroke-width":1.5},beat); // pinned steps
+    const nm=el("text",{x:BXh(p),y:y+4,"text-anchor":"middle",fill:css("panel"),"font-size":11,"font-weight":700},beat); nm.textContent=k+1;
+    const tl=el("text",{x:BXh(p),y:y+32+(k%2?14:0),"text-anchor":"middle",fill:css("muted"),"font-size":11},beat); tl.textContent=fmtTick(p);
+  }
+  [["beat 1",BXh(0)+4,"start"],["beat 2",BXh(N)+4,"start"],["beat 3",B1-4,"end"]].forEach(([s_,x,a])=>{ const t=el("text",{x,y:22,"text-anchor":a,fill:css("muted"),"font-size":12},beat); t.textContent=s_; });
+  const nt=el("text",{x:BXh(N/2),y:22,"text-anchor":"middle",fill:css("muted"),"font-size":12},beat); nt.textContent=`${N} ticks per beat`;
+  const name=state.timing==="DRAFT"?(draft.name||"your draft"):state.timing;
+  document.getElementById("halfTitle").textContent=state.creator
+    ?(s?`Timing creator: level ${s} on a ${N}-tick beat`:"Timing creator: level 0 is always straight")
+    :isTable(state.timing)?`Half a bar up close: ${name} on a ${N}-tick beat`:"Half a bar up close: the firmware's 8-step cycle";
+  beat.classList.toggle("editing",state.creator&&s>0);
+  const lens=rowsOf(state.timing)[s].stepLengths.slice(0,8).join(", ");
+  let note=isMine(state.timing)?mineNote(s,N)
+    :(slots&&s>0?`Each small mark is one tick. Taller marks are the ${N/4} slots of 4 ticks per beat.`:"Each mark is one tick. Numbers under the dots are the tick each step fires on.")
+      +` Step lengths${isAlt(state.timing)?" in the module's row format":" from the table"}: ${lens}.`;
+  document.getElementById("beatnote").textContent=note+feelNote();
+  if(state.creator){ document.getElementById("tbl").innerHTML=creatorTable(); return; }
+  const spb=60000/state.bpm;
+  let h=`<tr><th>Step</th><th>Straight tick</th><th>Firmware tick</th><th>Offset at ${state.bpm} bpm</th></tr>`;
+  for(let k=0;k<steps;k++){
+    const st=k*N/4, p=pos[k], ms=(p-st)/N*spb, cls=Math.abs(ms)<0.05?"":(ms>0?"late":"early");
+    h+=`<tr><td>${k+1}</td><td class="mono">${Number.isInteger(st)?st:st.toFixed(2)}</td><td class="mono">${fmtTick(p)}</td><td class="${cls} mono">${fmtMs(ms)}</td></tr>`;
+  }
+  document.getElementById("tbl").innerHTML=h;
+}
+// The 7 rows of any Timing in the module's own format: ticks per beat and 16 step lengths (the half bar twice).
+function rowsOf(t){
+  if(DATA[t]) return DATA[t].map((lens,L)=>({ticksPerBeat:DATA.N[L],stepLengths:lens.slice()}));
+  return [0,1,2,3,4,5,6].map(L=>{ const N=res(t,L), p=positions(t,L).slice(0,8), lens=p.map((x,k)=>(k<7?p[k+1]:2*N)-x); return {ticksPerBeat:N,stepLengths:[...lens,...lens]}; });
+}
+
+function feelNote(){
+  const f=feelKey(), fc=feelClock(), tick=(60000/state.bpm/fc.N).toFixed(1), every=rollsEveryTick(fc.row), unit=`1 tick (${tick} ms)`;
+  if(f==="Flam") return ` Flam: Kick and Snare fire ${unit} after each step.`;
+  if(f==="Slop") return ` Slop: Kick and Snare fire ${unit} after each step, and the hihats do too on steps where Kick or Snare also hits.`;
+  if(f==="Rolls") return ` Rolls: Hihat 2 retriggers on ${every?"every":"every second"} tick (every ${every?tick:(2*60000/state.bpm/fc.N).toFixed(1)} ms) until the next step.`;
+  return "";
+}
+function describe(){
+  const s=state.shuffle, N=curRes(), pos=positions(state.timing,s);
+  if(s===0) return "Straight 16ths. Nothing moves.";
+  const b=pos.slice(0,4), msA=t=>(Math.abs(t)/N*60000/state.bpm).toFixed(1)+" ms";
+  if(isMine(state.timing)){
+    const one=pos.slice(4,8).every((p,i)=>p===N+pos[i]);
+    return `${N} ticks per beat (${N/4} slots of 4). Steps land on ticks ${pos.slice(0,one?4:8).join(", ")} of ${one?"every beat":"each half bar"}.`;
+  }
+  if(state.timing==="HOPP") return `Swing ${(b[1]/(N/2)*100).toFixed(1)}% on a ${N}-tick beat: every second 16th lands ${msA(b[1]-N/4)} late.`;
+  if(state.timing==="DEEP") return `On a ${N}-tick beat, steps land on ticks ${b.join(", ")} of each beat: the 8ths and the 16ths both swing.`;
+  if(state.timing==="CLSTR") return `${N/4} slots of 4 ticks, with the e, & and a on ticks ${b.slice(1).join(", ")} of each beat.`;
+  if(state.timing==="SQEZ") return `On a ${N}-tick beat, steps land on ticks ${b.join(", ")}: the & and a squeeze toward the next beat.`;
+  if(state.timing==="FOLD") return `On a ${N}-tick beat, steps land on ticks ${b.join(", ")} of each beat: every beat folds in.`;
+  const row=DATA[state.timing][s], shift=pos.slice(0,8).map((p,k)=>p-k*N/4);
+  switch(state.timing){
+    case "Trip":  return `Grid of ${N/4} slots per beat. Steps land on slots ${pos.slice(0,4).map(p=>p/4+1).join(", ")}.`;
+    case "Shake": return `Swing ${(row[0]/(row[0]+row[1])*100).toFixed(1).replace(/\.0$/,"")}% (${row[0]}:${row[1]} ticks). Every second 16th lands late.`;
+    case "Push":  return `Steps 2 to 4 of each beat land ${shift[1]} tick${shift[1]>1?"s":""} late (${fmtMs(shift[1]/N*60000/state.bpm)}).`;
+    case "Clave": { const o=[1,2,4,5,7].map(k=>shift[k]); return `3:3:2 anchors (steps 1, 4, 7) stay on the grid. The others land ${Math.min(...o)} to ${Math.max(...o)} ticks late.`; }
+  }
+}
+function readout(){
+  const s=state.shuffle, N=curRes(), t=TIMINGS.find(x=>x.key===state.timing);
+  const maxMs=Math.max(...positions(state.timing,s).map((p,k)=>Math.abs(p-k*N/4)/N*60000/state.bpm));
+  const name=state.timing==="DRAFT"?(draft.name||"UNTITLED"):state.timing;
+  document.getElementById("roMode").innerHTML=`<b>${name}</b> · ${state.creator?"Level ":"Shuffle "}${s}<br><span class="sub">${t.blurb}</span>`;
+  document.getElementById("roDesc").textContent=describe();
+  document.getElementById("roRes").innerHTML=`${N} ticks<br><span class="sub">per beat</span>`;
+  document.getElementById("roMax").innerHTML=`${maxMs.toFixed(1)} ms<br><span class="sub">at ${state.bpm} bpm</span>`;
+}
+
+function update(){
+  shuffleIn.value=state.shuffle;
+  document.getElementById("knobName").textContent=state.creator?"Shuffle level":"Shuffle";
+  document.getElementById("timingDesc").textContent=TIMINGS.find(t=>t.key===state.timing).desc;
+  document.getElementById("shufv").textContent=state.shuffle;
+  document.querySelectorAll("#detents span").forEach((d,i)=>d.classList.toggle("on",i===state.shuffle));
+  document.querySelectorAll("#timing [data-timing]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.timing===state.timing)));
+  drawDl();
+  if(state.creator) drawCreator();
+  drawFeels(); drawSlots(); retarget(); drawHalf(); readout();
+}
+
+// ---------- controls ----------
+// Two groups, captioned like panel silkscreen: the module's four Timing buttons, then the alt tables (and yours).
+const tWrap=document.getElementById("timing"), tGroups={};
+for(const [g,cap] of [["stolper","Stolperbeats"],["alt","Alt tables · try them, then flash them in the Firmware lab"]]){
+  const grp=document.createElement("div"); grp.className="tgroup "+g;
+  grp.innerHTML=`<div class="tbtns"></div><span class="tcap">${cap}</span>`;
+  tWrap.appendChild(grp); tGroups[g]=grp;
+}
+function addTimingButton(t,lamp){
+  const item=document.createElement("div"); item.className="feel-item";
+  item.innerHTML=`<button class="lampbtn" data-timing="${t.key}" aria-pressed="false" title="${t.desc}"${lamp?` style="--lamp:${lamp}"`:""}>${t.key.toUpperCase()}</button>`;
+  item.querySelector("button").addEventListener("click",()=>{ state.timing=t.key; update(); });
+  tGroups[t.alt||t.mine?"alt":"stolper"].querySelector(".tbtns").appendChild(item);
+  return item;
+}
+for(const t of TIMINGS) addTimingButton(t,t.alt?"#45c472":"");
+// Download tables covers the selected alt table only, not the four factory Timings.
+function drawDl(){
+  const b=document.getElementById("dlTables"), ok=isAlt(state.timing);
+  b.disabled=!ok; b.title=ok?`Download ${state.timing} as Stolperbeats rows and MIDI grooves (zip)`:isMine(state.timing)?"Your own Timings export from the creator: pick it in Start from, then Export":"The factory Timings aren't included";
+}
+const det=document.getElementById("detents"), shuffleIn=document.getElementById("shuffle");
+for(let i=0;i<=6;i++){ const s=document.createElement("span"); s.textContent=i; s.addEventListener("click",()=>{ shuffleIn.value=i; state.shuffle=i; update(); }); det.appendChild(s); }
+shuffleIn.addEventListener("input",e=>{ state.shuffle=+e.target.value; update(); });
+document.getElementById("bpm").addEventListener("input",e=>{ state.bpm=+e.target.value; replanDue=true; document.getElementById("bpmv").textContent=state.bpm+" bpm"; drawHalf(); readout(); });
+document.getElementById("ab").addEventListener("click",e=>{
+  state.straight=!state.straight; e.currentTarget.setAttribute("aria-pressed",String(state.straight));
+  document.getElementById("knob").classList.toggle("bypassed",state.straight);
+  document.getElementById("feelrow").classList.toggle("bypassed",state.straight);
+  document.getElementById("timingrow").classList.toggle("bypassed",state.straight);
+  shuffleIn.setAttribute("aria-description",state.straight?"Bypassed: playing straight 16ths":"");
+  retarget();
+});
+const fWrap=document.getElementById("feels");
+FEELS.forEach((f,i)=>{
+  const item=document.createElement("div"); item.className="feel-item";
+  item.innerHTML=`<button class="lampbtn" style="--lamp:${f.lamp}" aria-pressed="false" title="${f.desc}">${f.key.toUpperCase()}</button>`;
+  item.querySelector("button").addEventListener("click",()=>{ state.feel=i; drawFeels(); retarget(); drawHalf(); });
+  fWrap.appendChild(item);
+});
+function drawFeels(){
+  document.getElementById("feelDesc").textContent=FEELS[state.feel].desc;
+  fWrap.querySelectorAll(".lampbtn").forEach((b,i)=>b.setAttribute("aria-pressed",String(i===state.feel)));
+  tGroups.stolper.style.setProperty("--lamp",FEELS[state.feel].lamp);
+}
+const themeBtn=document.getElementById("theme");
+function applyTheme(t){
+  document.documentElement.setAttribute("data-theme",t);
+  document.getElementById("themeLabel").textContent=t==="dark"?"Dark":"Light";
+  themeBtn.setAttribute("aria-label",t==="dark"?"Switch to light mode":"Switch to dark mode");
+}
+applyTheme(document.documentElement.getAttribute("data-theme")==="light"?"light":"dark");
+themeBtn.addEventListener("click",()=>{
+  const t=document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark";
+  applyTheme(t); try{ localStorage.setItem("stolperbeats-shuffle-map:theme",t); }catch(e){}
+});
+
+const lWrap=document.getElementById("linear");
+LINEARS.forEach((m,i)=>{ const b=document.createElement("button"); b.className="lampbtn tile"; b.style.setProperty("--lamp",m.lamp); b.textContent=m.key.toUpperCase(); b.title=m.desc;
+  b.addEventListener("click",()=>{ state.linear=i; drawLinear(); drawBar(); }); lWrap.appendChild(b); });
+function drawLinear(){
+  lWrap.querySelectorAll("button").forEach((b,i)=>b.setAttribute("aria-pressed",String(i===state.linear)));
+  document.getElementById("linearDesc").textContent=LINEARS[state.linear].desc;
+}
+drawLinear();
+const kWrap=document.getElementById("kits");
+for(const k of Object.keys(KITS)){ const b=document.createElement("button"); b.textContent=k; b.dataset.kit=k;
+  b.addEventListener("click",()=>{ state.kit=k; drawKits(); drawBar(); ensureAudio(); voice("BD",ctx.currentTime+0.01,0); }); kWrap.appendChild(b); }
+function drawKits(){ kWrap.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.kit===state.kit))); }
+
+const bWrap=document.getElementById("beats"), mineBtn=document.getElementById("mine"), clearBtn=document.getElementById("clear");
+BEATS.forEach((b,i)=>{ const btn=document.createElement("button"); btn.className="bbtn"; btn.innerHTML=`<span class="n">${i+1}</span>${b.name}`;
+  btn.addEventListener("click",()=>{ loadBeat(i); drawBeats(); drawBar(); drawBanks(); }); bWrap.appendChild(btn); });
+mineBtn.addEventListener("click",()=>{ loadBeat(CUSTOM); drawBeats(); drawBar(); drawBanks(); });
+clearBtn.addEventListener("click",()=>{ for(const L of LANES) custom[L.key].fill(0); saveCustom(); loadBeat(CUSTOM); drawBeats(); drawBar(); drawBanks(); });
+function drawBeats(){
+  bWrap.querySelectorAll(".bbtn").forEach((b,i)=>b.setAttribute("aria-pressed",String(i===beatIdx)));
+  mineBtn.setAttribute("aria-pressed",String(beatIdx===CUSTOM));
+  clearBtn.style.visibility=beatIdx===CUSTOM?"visible":"hidden";
+  const count=LANES.reduce((n,L)=>n+custom[L.key].reduce((a,b)=>a+b,0),0);
+  document.getElementById("status").textContent=beatIdx===CUSTOM
+    ? (count?`· your beat, ${count} hit${count>1?"s":""}, saved in this browser`:"· your beat is empty. Click or drag on the grid to add hits")
+    : beatIdx===MODSRC?`· ${beatName()}, edits save into the bank`
+    : `· ${BEATS[beatIdx].name}${edited?" (edited)":""}`;
+}
+
+// ---------- bar picker: which of the 4 bars the grid shows and edits ----------
+const tabsWrap=document.getElementById("barTabs"), followIn=document.getElementById("follow");
+let playBar=-1; // the bar playing now, -1 when stopped
+const tabBtns=[...Array(BARS).keys()].map(b=>{
+  const btn=document.createElement("button"); btn.className="btab"; btn.type="button";
+  btn.setAttribute("aria-label",`Bar ${b+1}`);
+  btn.innerHTML=`<span>${b+1}</span><svg width="48" height="11" viewBox="0 0 48 11" aria-hidden="true"></svg>`;
+  const svg=btn.querySelector("svg"); btn.marks={BD:[],SD:[]};
+  ["BD","SD"].forEach((l,r)=>{ for(let k=0;k<16;k++) btn.marks[l].push(el("rect",{x:k*3,y:r*6,width:2,height:4,rx:.5,class:"mk"},svg)); });
+  btn.addEventListener("click",()=>{ if(playing){ followIn.checked=false; } setViewBar(b); });
+  tabsWrap.appendChild(btn); return btn;
+});
+function drawBarTabs(){
+  tabBtns.forEach((btn,b)=>{
+    btn.setAttribute("aria-pressed",String(b===viewBar));
+    btn.classList.toggle("playing",b===playBar);
+    for(const l of ["BD","SD"]) btn.marks[l].forEach((m,k)=>m.classList.toggle("on",!!data[l][b*16+k]));
+  });
+  document.getElementById("barTitle").textContent=`Bar ${viewBar+1} of ${BARS}`;
+  document.getElementById("copyBar").textContent=`Copy bar ${viewBar+1} to all`;
+  bar.playhead.setAttribute("opacity",playBar<0||playBar===viewBar?1:.25);
+}
+function setViewBar(b){
+  if(b===viewBar) return drawBarTabs();
+  viewBar=barCtx=b; setHover(null);
+  target=computeTargets(); shown=cloneT(target); drawBar(); // Slop's hats and Linear depend on this bar's Kick and Snare
+}
+document.getElementById("copyBar").addEventListener("click",()=>{
+  for(const l of LONG){ const src=data[l].slice(viewBar*16,viewBar*16+16); for(let b=0;b<BARS;b++) if(b!==viewBar) src.forEach((v,k)=>data[l][b*16+k]=v); }
+  if(beatIdx===CUSTOM) saveCustom(); else if(beatIdx===MODSRC) bankEdited(); else edited=true;
+  drawBeats(); drawBar();
+});
+followIn.addEventListener("change",()=>{ if(followIn.checked&&playBar>=0) setViewBar(playBar); });
+
+// ---------- Pattern banks: the module's PatternBankNNN.txt files on its SD card ----------
+// Format, read from the module's own files: six groups (KICK, SNARE, HIHAT1, HIHAT2, PERC1, PERC2) of 24 lines,
+// "NAME > PTNp: bits;" with p = 0 to 23. Kick and Snare hold four 16-step bars separated by ", ", the others one.
+// 1 is a hit. Windows line endings, one blank line between groups, and a line ending after the last line.
+// PatternBank000.txt is Bank 1. Hits only: no accents or velocity in the file.
+const PTNS=24, MAX_BANKS=64, BANK_STORE="stolperbeats-shuffle-map:banks";
+const FILE_NAME={BD:"KICK",SD:"SNARE",H1:"HIHAT1",H2:"HIHAT2",P1:"PERC1",P2:"PERC2"};
+const pad3=n=>String(n).padStart(3,"0"), bankFile=n=>`PatternBank${pad3(n)}.txt`;
+const emptyBank=()=>Object.fromEntries(LANES.map(L=>[L.key,Array.from({length:PTNS},()=>Array(laneLen(L.key)).fill(0))]));
+function writeBank(bank){
+  return LANES.map(L=>bank[L.key].map((a,p)=>{
+    const bars=[]; for(let i=0;i<a.length;i+=16) bars.push(a.slice(i,i+16).join(""));
+    return `${FILE_NAME[L.key]} > PTN${p}: ${bars.join(", ")};`;
+  }).join("\r\n")).join("\r\n\r\n")+"\r\n";
+}
+function parseBank(text){
+  const bank=emptyBank(), got=new Set(), problems=[];
+  const keyOf=Object.fromEntries(Object.entries(FILE_NAME).map(([k,v])=>[v,k]));
+  text.split(/\r?\n/).forEach((raw,i)=>{
+    const line=raw.trim(); if(!line) return;
+    const m=line.match(/^([A-Z0-9]+)\s*>\s*PTN(\d+)\s*:\s*([01,\s]*?)\s*;?$/i), key=m&&keyOf[m[1].toUpperCase()];
+    if(!key){ problems.push(`line ${i+1} isn't a pattern line`); return; }
+    const p=+m[2], bars=m[3].split(",").map(s=>s.trim()), want=laneLen(key)/16;
+    if(p>=PTNS){ problems.push(`line ${i+1}: PTN${p} is past PTN${PTNS-1}`); return; }
+    if(bars.length!==want||bars.some(b=>!/^[01]{16}$/.test(b))){ problems.push(`line ${i+1}: ${FILE_NAME[key]} PTN${p} needs ${want} block${want>1?"s":""} of 16 ones and zeros`); return; }
+    bank[key][p]=bars.join("").split("").map(Number); got.add(key+p);
+  });
+  const missing=LANES.length*PTNS-got.size;
+  if(!got.size) throw new Error("no patterns found");
+  if(missing) problems.push(`${missing} pattern${missing>1?"s":""} missing, left empty`);
+  return {bank,problems};
+}
+
+// The module picks patterns per encoder: Kick, Snare, Hihat 1+2 and Perc 1+2. Each picks its own number (1 to 24)
+// from the bank, so Kick on 3 and Hihat 1 on 17 is normal. All six tracks pick separately, and changes land straight
+// away, like the module (both confirmed on hardware). Our default, until checked: Bank changes move every track at
+// once and keep their numbers.
+const GROUPS=[{g:"K",name:"Kick",lanes:["BD"]},{g:"S",name:"Snare",lanes:["SD"]},{g:"H1",name:"Hihat 1",lanes:["H1"]},{g:"H2",name:"Hihat 2",lanes:["H2"]},{g:"P1",name:"Perc 1",lanes:["P1"]},{g:"P2",name:"Perc 2",lanes:["P2"]}];
+const groupOf=Object.fromEntries(GROUPS.flatMap(G=>G.lanes.map(l=>[l,G.g])));
+// Banks are kept in this browser in their own file format, keyed by file number (0 = Bank 1).
+let banks=new Map(), selBank=null, modSel={K:0,S:0,H1:0,H2:0,P1:0,P2:0}, srcMode="sketch", sketch=null, undoSend=null;
+const trackPick=Object.fromEntries(LANES.map(L=>[L.key,true]));
+try{ const s=JSON.parse(localStorage.getItem(BANK_STORE))||{};
+  for(const [n,txt] of Object.entries(s.banks||{})){ const k=+n; if(Number.isInteger(k)&&k>=0&&k<MAX_BANKS) try{ banks.set(k,parseBank(txt).bank); }catch(e){} }
+  selBank=banks.has(s.sel)?s.sel:banks.size?Math.min(...banks.keys()):null;
+  if(s.ptn){ const old={H1:"H",H2:"H",P1:"P",P2:"P"}; // saves from when Hihat 1+2 and Perc 1+2 shared a number
+    for(const G of GROUPS){ const v=s.ptn[G.g]??s.ptn[old[G.g]]; if(Number.isInteger(v)&&v>=0&&v<PTNS) modSel[G.g]=v; } }
+  if(s.src==="module"&&selBank!==null) srcMode="module";
+}catch(e){}
+function saveBanks(){
+  try{ localStorage.setItem(BANK_STORE,JSON.stringify({sel:selBank,ptn:modSel,src:srcMode,banks:Object.fromEntries([...banks].map(([n,b])=>[n,writeBank(b)]))})); return true; }
+  catch(e){ bankMsg("Couldn't save banks in this browser (storage full?). Download them to keep them.",true); return false; }
+}
+const bankMsgEl=document.getElementById("bankMsg");
+function bankMsg(text,bad){ bankMsgEl.textContent=text||""; bankMsgEl.className="row-desc"+(bad?" bad":""); }
+function download(name,blob){
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+const firstFree=()=>{ for(let n=0;n<MAX_BANKS;n++) if(!banks.has(n)) return n; return null; };
+const sortedBanks=()=>[...banks.keys()].sort((a,b)=>a-b);
+const picked=()=>LANES.filter(L=>trackPick[L.key]).map(L=>L.key);
+const laneName=k=>LANES.find(L=>L.key===k).name;
+const shown2=()=>({bank:selBank,...modSel}); // the current choice, as one object
+const selList=()=>GROUPS.map(G=>`${G.name} ${modSel[G.g]+1}`).join(", ");
+function modName(){ return `Bank ${selBank+1}: ${selList()}`; }
+
+// ----- MODULE mode -----
+function bindModule(){ const b=banks.get(selBank); data=Object.fromEntries(LANES.map(L=>[L.key,b[L.key][modSel[groupOf[L.key]]]])); bindPattern(); }
+function refreshGrid(){ target=computeTargets(); shown=cloneT(target); drawBar(); drawBeats(); }
+function bankEdited(){ saveBanks(); drawBanks(); } // a grid edit in MODULE mode changed the bank
+function setSource(m){
+  if(m==="module"&&!banks.size){ srcMode="sketch"; drawModule(); openBanks(); bankMsg("Import your PatternBank files or start a new bank, then switch to MODULE.",true); return; }
+  if(m===srcMode) return;
+  if(m==="module"){
+    sketch={idx:beatIdx,data,edited}; srcMode="module"; beatIdx=MODSRC; edited=false;
+    if(!banks.has(selBank)) selBank=sortedBanks()[0];
+    bindModule();
+  } else {
+    srcMode="sketch";
+    if(sketch){ beatIdx=sketch.idx; data=sketch.data; edited=sketch.edited; bindPattern(); } else loadBeat(0);
+    sketch=null;
+  }
+  saveBanks(); refreshGrid(); drawModule(); drawBanks();
+}
+// Apply a bank + pattern choice. Straight away, even while playing: the scheduler replans the rest of the bar.
+function applySel(sel){
+  selBank=sel.bank; modSel=Object.fromEntries(GROUPS.map(G=>[G.g,sel[G.g]]));
+  if(srcMode==="module") bindModule();
+  saveBanks(); if(srcMode==="module") refreshGrid(); drawModule(); drawBanks();
+}
+function selectMod(change){
+  if(selBank===null) return;
+  applySel({...shown2(),...change});
+}
+function stepBank(d){ const list=sortedBanks(); if(!list.length) return; const i=list.indexOf(shown2().bank); selectMod({bank:list[(i+d+list.length)%list.length]}); }
+function stepGroup(g,d){ selectMod({[g]:(shown2()[g]+d+PTNS)%PTNS}); }
+// Can only fix up a selection that points at a bank that's gone (removed, renumbered, replaced on import).
+function syncModule(){
+  if(selBank!==null&&!banks.has(selBank)) selBank=banks.size?sortedBanks()[0]:null;
+  if(srcMode==="module"){ if(selBank===null){ srcMode="module"; setSource("sketch"); return; } bindModule(); refreshGrid(); }
+  saveBanks(); drawModule(); drawBanks();
+}
+
+// The MODULE strip above the grid: Bank, then one encoder per track group. Click the arrows, scroll over the number,
+// or focus it and use the arrow keys.
+const modStrip=document.getElementById("modStrip"), encs={};
+function makeEnc(key,label,cls,step){
+  const w=document.createElement("div"); w.className="encw";
+  w.innerHTML=`<span class="kitlabel">${label}</span><div class="enc ${cls}"><button type="button" aria-label="${label} down">◄</button><span class="v" tabindex="0" role="spinbutton" aria-label="${label}"></span><button type="button" aria-label="${label} up">►</button></div>`;
+  const [dn,up]=w.querySelectorAll("button"), v=w.querySelector(".v");
+  dn.addEventListener("click",()=>step(-1)); up.addEventListener("click",()=>step(1));
+  v.addEventListener("wheel",e=>{ e.preventDefault(); step(e.deltaY>0?-1:1); },{passive:false});
+  v.addEventListener("keydown",e=>{ const d={ArrowUp:1,ArrowRight:1,ArrowDown:-1,ArrowLeft:-1}[e.key]; if(d){ e.preventDefault(); step(d); } });
+  encs[key]=v; return w;
+}
+const stripBody=document.createElement("div"); stripBody.style.display="contents";
+stripBody.appendChild(makeEnc("bank","Bank","bank",d=>stepBank(d)));
+for(const G of GROUPS) stripBody.appendChild(makeEnc(G.g,G.name,"",d=>stepGroup(G.g,d)));
+const modNote=document.createElement("span"); modNote.className="modnote"; stripBody.appendChild(modNote);
+const stripEmpty=document.createElement("div"); stripEmpty.className="encw";
+stripEmpty.innerHTML=`<span class="modnote">No banks yet.</span><button class="dl" type="button" data-a="import">Import from SD</button><button class="dl" type="button" data-a="new">New bank</button>`;
+stripEmpty.querySelector('[data-a=import]').addEventListener("click",()=>document.getElementById("bankFile").click());
+stripEmpty.querySelector('[data-a=new]').addEventListener("click",()=>document.getElementById("bankNew").click());
+modStrip.append(stripBody,stripEmpty);
+function drawModule(){
+  const mod=srcMode==="module";
+  document.querySelectorAll("#srcSeg button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.src===srcMode)));
+  document.querySelector(".pickers").hidden=mod; modStrip.hidden=!mod;
+  const has=selBank!==null&&banks.has(selBank);
+  stripBody.style.display=has?"contents":"none"; stripEmpty.style.display=has?"none":"";
+  if(!has) return;
+  const sh=shown2();
+  encs.bank.textContent=`Bank ${sh.bank+1}`;
+  encs.bank.title=bankFile(sh.bank);
+  for(const G of GROUPS){ const v=encs[G.g]; v.textContent=String(sh[G.g]+1).padStart(2,"0");
+    v.title=`${G.name}: pattern ${sh[G.g]+1} (PTN${sh[G.g]} in the file)${G.lanes.length>1?`, ${G.lanes.map(laneName).join(" and ")} together`:""}`; }
+  modNote.textContent="Edits on the grid save into the bank";
+}
+document.querySelectorAll("#srcSeg button").forEach(b=>b.addEventListener("click",()=>setSource(b.dataset.src)));
+
+// ----- Pattern banks panel -----
+const bankCard=document.getElementById("bankCard");
+function openBanks(){ bankCard.open=true; bankCard.scrollIntoView({block:"nearest",behavior:"smooth"}); }
+// One row of 24 tiles per track. Each tile's mini map: Kick or Snare across all 4 bars, or a 1-bar track
+// stretched to the same width.
+const tileRows={};
+for(const G of GROUPS){
+  const row=document.createElement("div"); row.className="trow";
+  row.innerHTML=`<span class="tl">${G.name}</span><div class="tiles24" role="group" aria-label="${G.name} patterns"></div>`;
+  const wrap=row.querySelector(".tiles24");
+  tileRows[G.g]=[...Array(PTNS).keys()].map(p=>{
+    const b=document.createElement("button"); b.className="ptile"; b.type="button";
+    b.innerHTML=`<span>${p+1}</span><svg viewBox="0 0 64 7" preserveAspectRatio="none" aria-hidden="true"><rect class="bg" x="0" y="0" width="64" height="7"/><path class="on"/></svg>`;
+    b.path=b.querySelector("path.on");
+    b.addEventListener("click",()=>{ selectMod({[G.g]:p}); bankMsg(srcMode==="module"?"":`${G.name} set to pattern ${p+1}. Switch to MODULE to hear it, or Send sketch to write there.`); });
+    wrap.appendChild(b); return b;
+  });
+  document.getElementById("trows").appendChild(row);
+}
+function tilePath(G,b,p){
+  let d=""; const rows=G.lanes.length, h=rows>1?3:7;
+  G.lanes.forEach((l,r)=>{ const a=b[l][p], w=64/a.length, y=r*4;
+    a.forEach((v,i)=>{ if(v){ const ww=Math.max(w-.3,.7); d+=`M${i*w} ${y}h${ww}v${h}h-${ww}z`; } }); });
+  return d;
+}
+function drawBanks(){
+  const has=selBank!==null&&banks.has(selBank);
+  const tabs=document.getElementById("bankTabs"); tabs.innerHTML="";
+  const shownBank=has?shown2().bank:null;
+  sortedBanks().forEach(n=>{
+    const c=document.createElement("button"); c.className="bchip"; c.type="button"; c.textContent=`Bank ${n+1}`;
+    c.title=bankFile(n); c.setAttribute("aria-pressed",String(n===shownBank));
+    c.addEventListener("click",()=>{ undoSend=null; bankMsg(""); selectMod({bank:n}); });
+    tabs.appendChild(c);
+  });
+  if(has){ // renumber, and remove
+    const lab=document.createElement("span"); lab.className="kitlabel"; lab.textContent="File"; tabs.appendChild(lab);
+    const sel=document.createElement("select"); sel.setAttribute("aria-label","Bank number for this file");
+    for(let n=0;n<MAX_BANKS;n++){ const o=document.createElement("option"); o.value=n; o.textContent=`${bankFile(n)} (Bank ${n+1})`; o.disabled=banks.has(n)&&n!==selBank; o.selected=n===selBank; sel.appendChild(o); }
+    sel.addEventListener("change",()=>{ const to=+sel.value; banks.set(to,banks.get(selBank)); banks.delete(selBank);
+      selBank=to; syncModule(); drawBeats(); bankMsg(`Now saves as ${bankFile(to)}.`); });
+    tabs.appendChild(sel);
+    const rm=document.createElement("button"); rm.className="clear"; rm.type="button"; rm.textContent="Remove";
+    rm.addEventListener("click",()=>{ if(!confirm(`Remove Bank ${selBank+1} from this browser? Download it first if you want to keep it.`)) return;
+      banks.delete(selBank); undoSend=null; syncModule(); bankMsg("Bank removed."); });
+    tabs.appendChild(rm);
+  } else {
+    const e=document.createElement("span"); e.className="bankempty";
+    e.textContent="No banks yet. Import PatternBank files from your SD card, or start a new bank."; tabs.appendChild(e);
+  }
+  document.getElementById("trows").hidden=!has; document.getElementById("sendBar").hidden=!has||srcMode==="module";
+  if(has){
+    const b=banks.get(selBank), sh=shown2();
+    for(const G of GROUPS) tileRows[G.g].forEach((t,p)=>{
+      const d=tilePath(G,b,p); t.path.setAttribute("d",d);
+      t.setAttribute("aria-pressed",String(p===modSel[G.g]));
+      t.setAttribute("aria-label",`${G.name} pattern ${p+1}${d?"":", empty"}`); t.title=`${G.name} pattern ${p+1} (PTN${p} in the file)`;
+    });
+    document.getElementById("sendSketch").textContent=`Send sketch to Bank ${selBank+1}`;
+    document.getElementById("sendSketch").title=`Writes the ticked tracks into Bank ${selBank+1} at ${selList()}`;
+  }
+  document.querySelectorAll("#slotTracks button").forEach(b=>b.setAttribute("aria-pressed",String(trackPick[b.dataset.k])));
+  document.getElementById("sendSketch").disabled=!picked().length;
+  document.getElementById("sendUndo").hidden=!undoSend;
+  document.getElementById("bankDl").disabled=!has; document.getElementById("bankZip").disabled=!banks.size;
+  document.getElementById("bankStatus").textContent=has?`· ${modName()}, saves as ${bankFile(selBank)}`:"";
+}
+LANES.forEach(L=>{ const b=document.createElement("button"); b.type="button"; b.dataset.k=L.key; b.textContent=L.name;
+  b.addEventListener("click",()=>{ trackPick[L.key]=!trackPick[L.key]; drawBanks(); }); document.getElementById("slotTracks").appendChild(b); });
+
+// Send sketch: copy the SKETCH grid's ticked tracks into the bank at the current numbers. In place, so MODULE's
+// live view of the bank stays bound.
+document.getElementById("sendSketch").addEventListener("click",()=>{
+  if(selBank===null||srcMode==="module") return;
+  const b=banks.get(selBank), ks=picked();
+  undoSend={bank:selBank,lanes:Object.fromEntries(ks.map(k=>[k,{p:modSel[groupOf[k]],was:b[k][modSel[groupOf[k]]].slice()}]))};
+  for(const k of ks){ const a=b[k][modSel[groupOf[k]]]; a.splice(0,a.length,...data[k]); }
+  saveBanks(); drawBanks();
+  bankMsg(`Sent ${ks.length===LANES.length?"the sketch":andList(ks.map(laneName))} to Bank ${selBank+1}: ${[...new Set(ks.map(k=>groupOf[k]))].map(g=>{ const G=GROUPS.find(x=>x.g===g); return `${G.name} ${modSel[g]+1}`; }).join(", ")}. Download the bank to put it on the card.`);
+});
+document.getElementById("sendUndo").addEventListener("click",()=>{
+  if(!undoSend||!banks.has(undoSend.bank)) return;
+  const b=banks.get(undoSend.bank); for(const k in undoSend.lanes){ const {p,was}=undoSend.lanes[k], a=b[k][p]; a.splice(0,a.length,...was); }
+  undoSend=null; saveBanks(); drawBanks(); if(srcMode==="module") refreshGrid(); bankMsg("Send undone.");
+});
+const bankFileIn=document.getElementById("bankFile");
+document.getElementById("bankImport").addEventListener("click",()=>bankFileIn.click());
+bankFileIn.addEventListener("change",async()=>{
+  const files=[...bankFileIn.files]; bankFileIn.value="";
+  const done=[], bad=[];
+  for(const f of files){
+    try{
+      const {bank,problems}=parseBank(await f.text()), m=f.name.match(/PatternBank(\d{1,3})/i);
+      let n=m?+m[1]:firstFree();
+      if(n===null||n>=MAX_BANKS){ bad.push(`${f.name}: no free bank number`); continue; }
+      banks.set(n,bank); if(selBank===null) selBank=n; done.push(`Bank ${n+1}`);
+      if(problems.length) bad.push(`${f.name}: ${problems.slice(0,3).join("; ")}${problems.length>3?` and ${problems.length-3} more`:""}`);
+    }catch(e){ bad.push(`${f.name}: not a PatternBank file (${e.message})`); }
+  }
+  undoSend=null; syncModule(); // an import can replace the bank MODULE is playing
+  bankMsg([done.length?`Imported ${andList(done)}.`:"",...bad].filter(Boolean).join(" "),bad.length>0);
+});
+document.getElementById("bankNew").addEventListener("click",()=>{
+  const n=firstFree(); if(n===null) return bankMsg("All 64 bank numbers are in use.",true);
+  banks.set(n,emptyBank()); undoSend=null; openBanks();
+  applySel({...shown2(),bank:n});
+  bankMsg(`New empty Bank ${n+1}. It saves as ${bankFile(n)}.`);
+});
+document.getElementById("bankDl").addEventListener("click",()=>{
+  if(selBank===null) return;
+  download(bankFile(selBank),new Blob([writeBank(banks.get(selBank))],{type:"text/plain"}));
+});
+document.getElementById("bankZip").addEventListener("click",()=>{
+  if(!banks.size) return;
+  download("stolperbeats-pattern-banks.zip",zip(sortedBanks().map(n=>[bankFile(n),writeBank(banks.get(n))])));
+});
+// Opened in MODULE mode last time: start there. Drawing waits for the page's first full draw below.
+if(srcMode==="module"){ sketch=null; beatIdx=MODSRC; bindModule(); target=computeTargets(); shown=cloneT(target); }
+
+// ---------- audio: exact step times on the audio clock; changes land straight away (see replan) ----------
+let ctx=null, OUT=null, noiseBuf=null, playing=false, timer=null, raf=null, cur=null, evI=0, bars=[], openHat=null;
+function ensureAudio(){
+  if(!ctx){
+    ctx=new (window.AudioContext||window.webkitAudioContext)();
+    const master=ctx.createGain(), comp=ctx.createDynamicsCompressor();
+    master.gain.value=0.75; comp.threshold.value=-10; comp.ratio.value=4;
+    master.connect(comp).connect(ctx.destination); OUT=master;
+    noiseBuf=ctx.createBuffer(1,ctx.sampleRate,ctx.sampleRate);
+    const d=noiseBuf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+  }
+  if(ctx.state!=="running") ctx.resume();
+}
+function env(g,t,peak,dur){ g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(peak,t+0.002); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); }
+function osc(t,type,f0,f1,glide,dur,peak){
+  const o=ctx.createOscillator(), g=ctx.createGain(); o.type=type;
+  o.frequency.setValueAtTime(f0,t); if(f1) o.frequency.exponentialRampToValueAtTime(f1,t+glide);
+  env(g,t,peak,dur); o.connect(g).connect(OUT); o.start(t); o.stop(t+dur+0.05); return g;
+}
+function noise(t,dur,peak,filters){
+  const s=ctx.createBufferSource(); s.buffer=noiseBuf; let node=s;
+  for(const [type,f,q] of filters){ const b=ctx.createBiquadFilter(); b.type=type; b.frequency.value=f; if(q) b.Q.value=q; node.connect(b); node=b; }
+  const g=ctx.createGain(); env(g,t,peak,dur); node.connect(g).connect(OUT); s.start(t); s.stop(t+dur+0.05); return g;
+}
+function metal(t,dur,peak,hp){ // 808-style metallic hat: six detuned square waves
+  const g=ctx.createGain(), bp=ctx.createBiquadFilter(), h=ctx.createBiquadFilter();
+  bp.type="bandpass"; bp.frequency.value=10000; bp.Q.value=0.7; h.type="highpass"; h.frequency.value=hp;
+  env(g,t,peak,dur); bp.connect(h).connect(g).connect(OUT);
+  for(const f of [205.3,304.4,369.6,522.7,540,800]){ const o=ctx.createOscillator(); o.type="square"; o.frequency.value=f; o.connect(bp); o.start(t); o.stop(t+dur+0.05); }
+  return g;
+}
+function clap(t,f,tail,peak){ for(const d of [0,0.011,0.022]) noise(t+d,0.014,peak,[["bandpass",f,1.3]]); return noise(t+0.032,tail,peak*0.75,[["bandpass",f,1.1]]); }
+// lvl: 1 on the beat, softer on off-beat 16ths
+const VOICES={
+  "808":{
+    BD:t=>osc(t,"sine",150,47,0.07,0.8,1.0),
+    SD:t=>{ osc(t,"triangle",238,0,0,0.11,0.45); osc(t,"triangle",476,0,0,0.07,0.22); noise(t,0.17,0.32,[["highpass",1800]]); },
+    H1:(t,l)=>metal(t,0.05,0.34*l,7200),
+    H2:(t,l,dur)=>metal(t,dur,0.24*l,7200),
+    P1:t=>clap(t,1100,0.22,0.55),
+    P2:t=>osc(t,"sine",310,250,0.12,0.24,0.55)
+  },
+  "909":{
+    BD:t=>{ osc(t,"triangle",250,52,0.05,0.38,0.9); osc(t,"sine",120,50,0.06,0.42,0.6); noise(t,0.012,0.35,[["bandpass",3500,0.8]]); },
+    SD:t=>{ osc(t,"triangle",190,160,0.05,0.1,0.42); osc(t,"triangle",330,290,0.05,0.07,0.22); noise(t,0.26,0.48,[["highpass",2400]]); },
+    H1:(t,l)=>{ noise(t,0.045,0.3*l,[["highpass",9000]]); return metal(t,0.04,0.08*l,9000); },
+    H2:(t,l,dur)=>[noise(t,dur,0.2*l,[["highpass",8500]]),metal(t,dur,0.06*l,8500)],
+    P1:t=>{ osc(t,"triangle",500,0,0,0.025,0.4); osc(t,"triangle",1720,0,0,0.02,0.28); noise(t,0.02,0.28,[["bandpass",2500,1]]); },
+    P2:t=>{ osc(t,"sine",150,105,0.2,0.4,0.6); noise(t,0.05,0.07,[["lowpass",1200]]); }
+  },
+  "606":{
+    BD:t=>osc(t,"sine",180,58,0.035,0.2,1.0),
+    SD:t=>{ osc(t,"triangle",230,0,0,0.06,0.3); noise(t,0.12,0.45,[["bandpass",3200,0.7]]); },
+    H1:(t,l)=>noise(t,0.03,0.3*l,[["highpass",7000],["bandpass",9500,0.8]]),
+    H2:(t,l,dur)=>noise(t,dur*0.7,0.22*l,[["highpass",7000],["bandpass",9500,0.8]]),
+    P1:t=>osc(t,"sine",290,215,0.15,0.22,0.55),
+    P2:t=>osc(t,"sine",185,135,0.18,0.3,0.6)
+  }
+};
+function voice(lane,t,k,roll,lvl){
+  if((lane==="H1"||lane==="H2")&&openHat&&openHat.end>t){ // a new hat hit chokes the ringing open hat
+    for(const g of openHat.gs){ g.gain.cancelScheduledValues(t); g.gain.setTargetAtTime(0.0001,t,0.008); }
+    openHat=null;
+  }
+  if(lane==="H2"){ const dur=roll?0.07:0.45; openHat={gs:[].concat(VOICES[state.kit].H2(t,roll?0.75:1,dur)).filter(Boolean),end:t+dur}; return; }
+  VOICES[state.kit][lane](t,lvl??(k%4===0?1:(k%2===0?0.8:0.6)));
+}
+// One bar's events (b = 0 to 3). Kick and Snare come from that bar; the 1-bar tracks are the same every bar.
+function barEvents(b=viewBar){ return atBar(b,()=>{
+  const N=curRes(), spb=60/state.bpm;
+  const list=[];
+  // id names each hit by its step, not its time, so a replan knows which hits of this bar have already fired
+  for(const L of LANES){ const ticks=laneTicks(L.key); for(let k=0;k<16;k++) if(pattern[L.key][k]&&!linearMuted(L.key,k)) list.push({t:ticks[k]/N*spb,lane:L.key,k,id:L.key+k}); }
+  const sub={}; // ratchets: the j-th retrigger after step k
+  for(const r of rollTicks()){ const j=sub["r"+r.k]=(sub["r"+r.k]||0)+1; list.push({t:r.t/N*spb,lane:"H2",k:r.k,roll:true,id:`r${r.k}.${j}`}); }
+  list.sort((a,b)=>a.t-b.t); return {list,dur:4*spb,bar:b};
+}); }
+// The groove a bar plays: Timing and Shuffle. Like the module, a change to either waits for the next beat
+// (the firmware takes the new row at step 0 or 4 of each half bar); patterns, Feel and tempo change straight away.
+const grooveKey=()=>state.timing+"|"+state.shuffle;
+function withGroove(g,fn){
+  const [t,sh]=g.split("|"), keep=[state.timing,state.shuffle];
+  if(!TIMINGS.some(x=>x.key===t)) return fn(); // a Timing deleted mid-bar: use the current one
+  state.timing=t; state.shuffle=+sh;
+  try{ return fn(); } finally{ [state.timing,state.shuffle]=keep; }
+}
+// A bar's events from its groove segments: each segment covers steps [from, next segment's from).
+function segEvents(b){
+  const parts=b.segs.map((sg,i)=>{ const to=i+1<b.segs.length?b.segs[i+1].from:16;
+    return withGroove(sg.g,()=>barEvents(b.bar)).list.filter(e=>e.k>=sg.from&&e.k<to); });
+  return {list:parts.flat().sort((x,y)=>x.t-y.t),dur:b.dur,bar:b.bar};
+}
+const newBar=(start,dur,bar)=>({start,dur,bar,fired:new Set(),maxK:-1,segs:[{from:0,g:grooveKey()}]});
+const LOOK=0.1; // seconds scheduled ahead of the audio clock
+let schedTo=0;   // everything up to this time is already scheduled
+function schedule(){
+  if(replanDue){ replanDue=false; replan(); }
+  const horizon=ctx.currentTime+LOOK;
+  for(;;){
+    if(evI>=cur.list.length){
+      const last=bars[bars.length-1], next=last.start+last.dur;
+      if(next>horizon) break;
+      cur=barEvents((last.bar+1)%BARS); evI=0; bars.push(newBar(next,cur.dur,cur.bar)); if(bars.length>4) bars.shift(); continue;
+    }
+    const B=bars[bars.length-1], e=cur.list[evI], t=B.start+e.t;
+    if(t>horizon) break;
+    // A hit a replan moved behind the clock fires now, like the module's step compare catching up: never twice, never lost
+    if(!muted[e.lane]) voice(e.lane,Math.max(t,ctx.currentTime+0.003),e.k,e.roll,e.lvl);
+    B.fired.add(e.id); B.maxK=Math.max(B.maxK,e.k); evI++;
+  }
+  schedTo=Math.max(schedTo,horizon);
+}
+// Rebuild the bar being scheduled from the current settings and carry on, the way the firmware does it: it fires
+// steps in order against a tick counter, so a change can move steps that haven't fired yet but can never fire a step
+// twice. Here every hit has an id (its step), each bar remembers the ids it has fired, and a replan keeps only the
+// hits not fired yet. Hits already on the audio clock (at most LOOK seconds ahead) play as they were.
+// A tempo change keeps the playhead's place in the bar. A Timing or Shuffle change starts a new groove segment at
+// the next beat (step 4, 8 or 12) whose steps haven't fired; steps before it keep the old groove.
+function replan(){
+  const b=bars[bars.length-1], now=ctx.currentTime, dur=4*60/state.bpm;
+  if(Math.abs(dur-b.dur)>1e-9){ if(now>b.start) b.start=now-(now-b.start)/b.dur*dur; b.dur=dur; }
+  const g=grooveKey(), K=4*Math.ceil((b.maxK+1)/4); // next beat with nothing fired yet
+  if(g!==b.segs[b.segs.length-1].g&&K<16){ b.segs=b.segs.filter(sg=>sg.from<K); b.segs.push({from:K,g}); }
+  cur=segEvents(b); cur.list=cur.list.filter(e=>!b.fired.has(e.id)); evI=0;
+}
+function frame(){
+  const now=ctx.currentTime, b=[...bars].reverse().find(x=>x.start<=now);
+  if(b){
+    if(b.bar!==playBar){ playBar=b.bar; if(followIn.checked) setViewBar(playBar); else drawBarTabs(); }
+    const x=BX(Math.min(1,(now-b.start)/b.dur)); bar.playhead.setAttribute("x1",x); bar.playhead.setAttribute("x2",x);
+  }
+  raf=requestAnimationFrame(frame);
+}
+function setPlay(on){
+  const btn=document.getElementById("play");
+  if(on){
+    ensureAudio();
+    cur=barEvents(0); evI=0; schedTo=0; replanDue=false; bars=[newBar(ctx.currentTime+0.1,cur.dur,0)]; // always from the top of bar 1
+    timer=setInterval(schedule,20); schedule(); raf=requestAnimationFrame(frame);
+    bar.playhead.setAttribute("visibility","visible");
+  } else { clearInterval(timer); cancelAnimationFrame(raf); bar.playhead.setAttribute("visibility","hidden"); playBar=-1; drawBarTabs(); }
+  playing=on; btn.setAttribute("aria-pressed",String(on));
+  btn.querySelector("span").textContent=on?"Stop":"Play";
+  document.getElementById("playIcon").setAttribute("d",on?"M2 2h6v6H2z":"M2 1l7 4-7 4z");
+}
+document.getElementById("play").addEventListener("click",()=>setPlay(!playing));
+
+// ---------- Download tables: every mapped style (not the four factory Timings) as a zip ----------
+// tables.json and tables_96ppq.csv (step positions at 96 ticks per beat), stolperbeats_rows.txt (rows in the module's
+// own format: 16 step lengths + ticks per beat), MIDI grooves for Ableton, and a README. No firmware, no addresses.
+const GM={BD:36,SD:38,H1:42,H2:46,P1:39,P2:63};
+
+// ---------- Download MIDI: the 4-bar pattern, exactly as it plays ----------
+// Four bars of 4/4 at the current tempo, GM drums on channel 10, 960 ticks per quarter (hits round to the nearest 1/960
+// of a beat, under 0.4 ms at 90 bpm). Same events the player schedules: every hit at its played tick (Timing, Shuffle,
+// Feel, Hear straight), Rolls ratchets, accents as velocity. Muted tracks and Linear-silenced hits are left out.
+function gridMidi(){
+  // All 4 bars: Kick and Snare as written in each bar, the 1-bar tracks repeated under them.
+  const PPQ=960, BAR1=4*PPQ, BAR=BARS*BAR1, spb=60/state.bpm;
+  const ev=[...Array(BARS).keys()].flatMap(b=>barEvents(b).list.filter(e=>!muted[e.lane]).map(e=>({
+    // a hit dragged past a bar line (Flam late in the bar at fast tempos) lands in the next bar, and past bar 4 wraps to the top
+    at:((b*BAR1+Math.round(e.t/spb*PPQ))%BAR+BAR)%BAR, note:GM[e.lane],
+    vel:Math.max(1,Math.min(127,Math.round(115*(e.roll?0.75:e.lvl??(e.k%4===0?1:e.k%2===0?0.8:0.6)))))})));
+  const msgs=[];
+  for(const e of ev){ // note length: up to a 32nd, ending before the same note plays again
+    const next=ev.filter(x=>x.note===e.note&&x.at>e.at).reduce((m,x)=>Math.min(m,x.at),BAR);
+    msgs.push([e.at,1,[0x99,e.note,e.vel]],[e.at+Math.max(1,Math.min(PPQ/8,next-e.at-1)),0,[0x89,e.note,0]]);
+  }
+  msgs.sort((a,b)=>a[0]-b[0]||a[1]-b[1]); // note-offs before note-ons on the same tick
+  const vlq=n=>{ const b=[n&0x7f]; while((n>>=7)>0) b.unshift((n&0x7f)|0x80); return b; };
+  const name=midiName(), nm=[...new TextEncoder().encode(name)], us=Math.round(60e6/state.bpm);
+  const trk=[0,0xff,0x03,...vlq(nm.length),...nm, 0,0xff,0x51,3,(us>>16)&255,(us>>8)&255,us&255, 0,0xff,0x58,4,4,2,24,8];
+  let now=0; for(const [at,,bytes] of msgs){ trk.push(...vlq(at-now),...bytes); now=at; }
+  trk.push(...vlq(Math.max(0,BAR-now)),0xff,0x2f,0);
+  const u32=n=>[(n>>>24)&255,(n>>>16)&255,(n>>>8)&255,n&255];
+  return {bytes:new Uint8Array([0x4d,0x54,0x68,0x64,0,0,0,6,0,0,0,1,(PPQ>>8)&255,PPQ&255, 0x4d,0x54,0x72,0x6b,...u32(trk.length),...trk]),name,hits:ev.length};
+}
+function midiName(){
+  const t=state.timing==="DRAFT"?(draft.name||"UNTITLED"):state.timing;
+  return state.straight?`${beatName()}, straight, ${state.bpm} bpm`:`${beatName()}, ${t} ${state.shuffle}, ${FEELS[state.feel].key}${LINEARS[state.linear].chains?", Linear":""}, ${state.bpm} bpm`;
+}
+document.getElementById("dlMidi").addEventListener("click",()=>{
+  const {bytes,name}=gridMidi(), a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([bytes],{type:"audio/midi"}));
+  a.download="stolperbeats-"+name.replace(/[^A-Za-z0-9 ]+/g," ").replace(/ +/g," ").trim().replace(/ /g,"-")+".mid";
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+});
+const TRACK_NAME={BD:"Kick",SD:"Snare",H1:"Hihat1",H2:"Hihat2",P1:"Perc1",P2:"Perc2"};
+// One alt table, ready for the zip: its 7 module rows and where each step lands at 96 ticks per beat.
+function styleTable(key){
+  const t=TIMINGS.find(x=>x.key===key), rows=rowsOf(key);
+  const levels=[1,2,3,4,5,6].map(L=>({level:L,steps:positions(key,L).map(p=>+(p/res(key,L)*96).toFixed(3))}));
+  return {style:key,about:t.desc,rows,levels};
+}
+function tablesReadme(st){
+  const k=st.style, files=[
+    ["README.txt","this file"],
+    [`${k}.json`,"the rows, and step positions at 96 ticks per beat"],
+    [`${k}_stolperbeats_rows.txt`,"the style in Stolperbeats' own row format"],
+    ["midi/","one-bar groove clips for Ableton Live"]];
+  const w=Math.max(...files.map(f=>f[0].length))+3;
+  return [
+`${k}: ${st.about}`,
+"Stolperbeats visualiser, alt timing table",
+"For Educational Purposes Only.",
+"",
+"",
+"WHAT'S IN THIS ZIP",
+"",
+...files.map(([n,d])=>"  "+n.padEnd(w)+d),
+"",
+"",
+"STOLPERBEATS-FORMAT ROWS",
+"",
+"  One row per level: the ticks per beat, then 16 step lengths (one bar of 16ths).",
+"  Each step plays at the running total of the lengths before it.",
+"  Level 0 is straight. Every grid is 16 to 36 ticks per beat in steps of 4, like the module's own.",
+"  To try it on a module, use the Firmware lab on the visualiser page with your own official firmware file.",
+"",
+"",
+"MIDI GROOVES IN ABLETON LIVE",
+"",
+"  1. Drag a clip from midi/ onto a MIDI track.",
+"  2. Right-click the clip and choose Extract Groove(s).",
+"  3. Apply the groove from the Groove Pool to your own clips.",
+"",
+"  The clips are one bar at 90 bpm, 960 ticks per beat. Each is a closed hat (note 42) on every 16th.",
+"",
+"",
+"PLEASE NOTE",
+"",
+"  - Unofficial and independent. Not affiliated with, endorsed by or supported by Making Sound Machines.",
+"  - Stolperbeats and its firmware belong to Making Sound Machines.",
+"  - No firmware is included, only this style's timing table.",
+""].join("\n");
+}
+// --- tiny writers: Standard MIDI File (format 0) and a stored (uncompressed) zip ---
+function midiFile(ticks96,note,name){
+  const vlq=n=>{ const b=[n&0x7f]; while((n>>=7)>0) b.unshift((n&0x7f)|0x80); return b; };
+  const t=ticks96.map(x=>Math.round(x*10)), ev=[];
+  t.forEach((x,i)=>{ const next=i<15?t[i+1]:3840, off=x+Math.max(1,Math.min(120,next-x-1)); ev.push([x,1,[0x99,note,100]],[off,0,[0x89,note,0]]); });
+  ev.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
+  const nm=[...new TextEncoder().encode(name)];
+  let trk=[0,0xff,0x03,...vlq(nm.length),...nm, 0,0xff,0x51,3,0x0a,0x2c,0x2b, 0,0xff,0x58,4,4,2,24,8], now=0;
+  for(const [at,,bytes] of ev){ trk.push(...vlq(at-now),...bytes); now=at; }
+  trk.push(...vlq(Math.max(0,3840-now)),0xff,0x2f,0);
+  const u32=n=>[(n>>>24)&255,(n>>>16)&255,(n>>>8)&255,n&255];
+  return new Uint8Array([0x4d,0x54,0x68,0x64,0,0,0,6,0,0,0,1,0x03,0xc0, 0x4d,0x54,0x72,0x6b,...u32(trk.length),...trk]);
+}
+const CRC=(()=>{ const t=new Uint32Array(256); for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c=c&1?0xedb88320^(c>>>1):c>>>1; t[n]=c>>>0; } return t; })();
+const crc32=b=>{ let c=0xffffffff; for(const x of b) c=CRC[(c^x)&255]^(c>>>8); return (c^0xffffffff)>>>0; };
+function zip(files){ // files: [[name, Uint8Array|string]]
+  const enc=new TextEncoder(), parts=[], central=[]; let offset=0;
+  const le=(n,w)=>Array.from({length:w},(_,i)=>(n>>>(8*i))&255);
+  for(const [name,data] of files){
+    const d=typeof data==="string"?enc.encode(data):data, nm=enc.encode(name), crc=crc32(d);
+    const head=[...le(0x04034b50,4),20,0,0,0,0,0,0,0,0x21,0,...le(crc,4),...le(d.length,4),...le(d.length,4),...le(nm.length,2),0,0];
+    parts.push(new Uint8Array(head),nm,d);
+    central.push(new Uint8Array([...le(0x02014b50,4),20,0,20,0,0,0,0,0,0,0,0x21,0,...le(crc,4),...le(d.length,4),...le(d.length,4),...le(nm.length,2),0,0,0,0,0,0,0,0,0,0,0,0,...le(offset,4)]),nm);
+    offset+=head.length+nm.length+d.length;
+  }
+  const cdSize=central.reduce((a,b)=>a+b.length,0);
+  const end=new Uint8Array([...le(0x06054b50,4),0,0,0,0,...le(files.length,2),...le(files.length,2),...le(cdSize,4),...le(offset,4),0,0]);
+  return new Blob([...parts,...central,end],{type:"application/zip"});
+}
+function buildTablesZip(key){
+  const st=styleTable(key), k=st.style, files=[["README.txt",tablesReadme(st)]];
+  files.push([`${k}.json`,JSON.stringify({style:k,about:st.about,note:"For Educational Purposes Only. Unofficial; no firmware included.",stolperbeatsRows:st.rows,ticksPerBeat:96,levels:st.levels},null,1)]);
+  let rows=`${k}: ${st.about}\nStolperbeats-format rows. For Educational Purposes Only.\n\nlevel  ticks/beat  step lengths (one bar of 16ths)\n`;
+  st.rows.forEach((r,L)=>rows+=`${String(L).padEnd(7)}${String(r.ticksPerBeat).padEnd(12)}${[...r.stepLengths,...r.stepLengths].join(" ")}\n`);
+  files.push([`${k}_stolperbeats_rows.txt`,rows]);
+  for(const L of st.levels) files.push([`midi/${k}_L${L.level}.mid`,midiFile(L.steps,42,`${k} L${L.level}`)]);
+  return {blob:zip(files),count:files.length};
+}
+document.getElementById("dlTables").addEventListener("click",()=>{
+  if(!isAlt(state.timing)) return;
+  const {blob}=buildTablesZip(state.timing), a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download=`stolperbeats-${state.timing}-tables.zip`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+});
+
+// ---------- timing creator: roll your own module table ----------
+// A Timing is 7 firmware rows: level 0 is straight (16 ticks per beat), and levels 1 to 6 each have their own grid N
+// (16 to 36 in steps of 4, so the Subdiv clock out stays even) and the tick each of the half bar's 8 steps fires on.
+// Always enforced, so any draft can go into a bin: whole ticks, step 1 on tick 0, every step at least 1 tick, and the
+// 8 lengths adding up to 2N. Step 5 sits on the beat (tick N) and is pinned there, unless the source put it elsewhere
+// (factory Clave does), in which case it stays where the source had it.
+const GRIDS=[16,20,24,28,32,36], MINE_STORE="stolperbeats-shuffle-map:mine", DRAFT_STORE="stolperbeats-shuffle-map:draft";
+const RESERVED=new Set(TIMINGS.map(t=>t.key.toUpperCase()).concat(["DRAFT","UNTITLED","STRAIGHT"]));
+TIMINGS.push({key:"DRAFT",mine:true,blurb:"being made in the creator",desc:"Your Timing in the creator."}); // no button
+const straightLevel=N=>({N,pos:[0,1,2,3,4,5,6,7].map(k=>k*N/4)});
+const copyLevel=L=>({N:L.N,pos:L.pos.slice()});
+const validLevel=L=>!!L&&GRIDS.includes(L.N)&&Array.isArray(L.pos)&&L.pos.length===8&&L.pos[0]===0&&
+  L.pos.every((p,k)=>Number.isInteger(p)&&(k===0||p>L.pos[k-1]))&&L.pos[7]<2*L.N;
+const isLinked=L=>L.pos[4]===L.N&&[1,2,3].every(i=>L.pos[4+i]===L.N+L.pos[i]);
+function linkLevel(L){ L.pos[4]=L.N; for(let i=1;i<4;i++) L.pos[4+i]=L.N+L.pos[i]; return L; }
+const cleanName=v=>String(v||"").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,5);
+const andList=a=>a.length<2?String(a[0]):a.slice(0,-1).join(", ")+" and "+a[a.length-1];
+const blankDraft=()=>({name:"",from:"",linked:true,snap:1,levels:Array(6).fill(null)});
+let draft=blankDraft(), prevTiming="Trip", savedHere=null, flashTimer=null;
+try{ const d=JSON.parse(localStorage.getItem(DRAFT_STORE));
+  if(d&&Array.isArray(d.levels)&&d.levels.length===6&&d.levels.every(L=>L===null||validLevel(L))) draft={...blankDraft(),...d,name:cleanName(d.name)}; }catch(e){}
+function saveDraft(){ try{ localStorage.setItem(DRAFT_STORE,JSON.stringify(draft)); }catch(e){} }
+
+// A level you haven't visited yet is a copy of the one before it; visiting it makes that copy its own.
+function resolved(L){ return L===0?straightLevel(16):draft.levels[L-1]||resolved(L-1); }
+function touch(L){ if(L>0&&!draft.levels[L-1]) draft.levels[L-1]=copyLevel(resolved(L-1)); }
+function syncDraft(){ MODULE.DRAFT=[1,2,3,4,5,6].map(L=>{ const v=resolved(L); return [v.N,v.pos]; }); }
+// The 7 rows exactly as the firmware holds them: 16 step lengths (the half bar twice) and the ticks per beat.
+function draftRows(){
+  return [straightLevel(16),...[1,2,3,4,5,6].map(resolved)].map(L=>{
+    const lens=L.pos.map((p,k)=>(k<7?L.pos[k+1]:2*L.N)-p);
+    return {ticksPerBeat:L.N,stepLengths:[...lens,...lens],pos:L.pos.slice()}; });
+}
+const rowOk=r=>GRIDS.includes(r.ticksPerBeat)&&r.stepLengths.every(x=>Number.isInteger(x)&&x>=1&&x<=255)&&
+  r.stepLengths.slice(0,8).reduce((a,b)=>a+b,0)===2*r.ticksPerBeat;
+function draftNotes(){
+  const rows=draftRows(), notes=[], lv=f=>rows.map((r,L)=>L&&f(r)?L:0).filter(Boolean);
+  const one=lv(r=>Math.min(...r.stepLengths)===1);
+  if(one.length) notes.push(`1-tick steps on level ${andList(one)} (2 is the shortest tested on hardware)`);
+  const off=lv(r=>r.pos[4]!==r.ticksPerBeat);
+  if(off.length) notes.push(`step 5 is off the beat on level ${andList(off)}, like factory Clave`);
+  if(rows[3].ticksPerBeat>20) notes.push(`Rolls buzz at level 3 (every tick of ${rows[3].ticksPerBeat})`);
+  return notes;
+}
+
+// Start from: any Timing the module could hold as a table, or your own.
+const mineKeys=()=>TIMINGS.filter(t=>t.mine&&t.key!=="DRAFT").map(t=>t.key);
+const loadable=()=>["Trip","Shake","Push","Clave","HOPP","DEEP","SQEZ","CLSTR","FOLD",...mineKeys()];
+function levelsFrom(key){
+  const src=key;
+  return [1,2,3,4,5,6].map(L=>{
+    if(DATA[src]&&!MODULE[src]){ const lens=DATA[src][L].slice(0,8), pos=[0]; for(let k=0;k<7;k++) pos.push(pos[k]+lens[k]); return {N:DATA.N[L],pos}; }
+    const [N,cyc]=MODULE[src][L-1]; return {N,pos:cyc.length===8?cyc.slice():cyc.concat(cyc.map(x=>x+N))};
+  });
+}
+function applyFrom(key){
+  const straight=key==="Straight";
+  draft.levels=straight?Array(6).fill(null):levelsFrom(key);
+  draft.linked=straight||draft.levels.every(isLinked); draft.from=key;
+  if(mineKeys().includes(key)) draft.name=key;
+  cSel=null; saveDraft();
+  flash(straight?"Starting straight. Each level starts as a copy of the one before.":`Loaded ${key}, all 6 levels. Drag steps to change it.`);
+}
+
+// Change a level's grid: steps keep their place in the beat, rounded to the new grid (and snap), still in order.
+function regrid(L,N2,q){
+  const f=N2/L.N, p=L.pos.map(x=>Math.round(x*f/q)*q), onBeat=L.pos[4]===L.N;
+  p[0]=0; if(onBeat) p[4]=N2;
+  for(let k=1;k<8;k++) if(!(onBeat&&k===4)) p[k]=Math.max(p[k],p[k-1]+1);
+  for(let k=7;k>0;k--) if(!(onBeat&&k===4)) p[k]=Math.min(p[k],(k<7?p[k+1]:2*N2)-1);
+  const out={N:N2,pos:p};
+  return validLevel(out)?out:straightLevel(N2);
+}
+// Move one step (0-based 1-3 or 5-7; 0 and 4 are pinned) to tick t, snapped, between its neighbours.
+function clampSnap(t,lo,hi,q){
+  let c=Math.round(t/q)*q; if(c<lo) c=Math.ceil(lo/q)*q; if(c>hi) c=Math.floor(hi/q)*q;
+  return c<lo||c>hi?Math.min(Math.max(Math.round(t),lo),hi):c;
+}
+function moveStep(k,t){
+  const L=draft.levels[state.shuffle-1], p=L.pos, N=L.N, q=draft.snap;
+  if(draft.linked){ const i=k%4; p[i]=clampSnap(t-(k>=4?N:0),p[i-1]+1,(i<3?p[i+1]:N)-1,q); linkLevel(L); }
+  else p[k]=clampSnap(t,p[k-1]+1,(k<7?p[k+1]:2*N)-1,q);
+}
+function refresh(){ syncDraft(); target=computeTargets(); shown=cloneT(target); drawBar(); drawSlots(); drawHalf(); readout(); drawCreator(); }
+
+// Dragging in the half-bar view
+const EDITABLE=[1,2,3,5,6,7];
+function beatPt(e){ const p=beat.createSVGPoint(); p.x=e.clientX; p.y=e.clientY; return p.matrixTransform(beat.getScreenCTM().inverse()); }
+const halfX=(t,N)=>B0+(B1-B0)*t/(2*N), halfT=(x,N)=>(x-B0)/(B1-B0)*2*N;
+function stepAt(e){
+  if(!state.creator||!state.shuffle) return null;
+  const pt=beatPt(e), L=draft.levels[state.shuffle-1]; if(!L||Math.abs(pt.y-74)>36) return null;
+  let best=null, bd=22;
+  for(const k of EDITABLE){ const d=Math.abs(halfX(L.pos[k],L.N)-pt.x); if(d<bd){ bd=d; best=k; } }
+  return best;
+}
+let dragK=null;
+beat.addEventListener("pointerdown",e=>{
+  const k=stepAt(e); if(k===null) return;
+  e.preventDefault(); try{ beat.setPointerCapture(e.pointerId); }catch(err){}
+  dragK=k; cSel=k; beat.focus({preventScroll:true}); refresh();
+});
+beat.addEventListener("pointermove",e=>{
+  if(dragK===null){ beat.style.cursor=stepAt(e)!==null?"ew-resize":""; return; }
+  const L=draft.levels[state.shuffle-1], before=L.pos.join();
+  moveStep(dragK,halfT(beatPt(e).x,L.N)); if(L.pos.join()!==before) refresh();
+});
+const endDrag=()=>{ if(dragK===null) return; dragK=null; saveDraft(); };
+beat.addEventListener("pointerup",endDrag); beat.addEventListener("pointercancel",endDrag);
+beat.addEventListener("keydown",e=>{
+  if(!state.creator||!state.shuffle) return;
+  const L=draft.levels[state.shuffle-1];
+  if(e.key==="ArrowLeft"||e.key==="ArrowRight"){ e.preventDefault(); if(cSel===null) cSel=1;
+    moveStep(cSel,L.pos[cSel]+(e.key==="ArrowRight"?1:-1)*draft.snap); saveDraft(); refresh(); }
+  else if(e.key==="ArrowUp"||e.key==="ArrowDown"){ e.preventDefault();
+    const i=cSel===null?-1:EDITABLE.indexOf(cSel); cSel=EDITABLE[(i+(e.key==="ArrowDown"?1:EDITABLE.length-1+(i<0?1:0)))%EDITABLE.length]; refresh(); }
+});
+
+// Controls
+const cName=document.getElementById("cName"), cFrom=document.getElementById("cFrom"), cMsg=document.getElementById("cMsg"), cGrid=document.getElementById("cGrid");
+function flash(text,bad){
+  clearTimeout(flashTimer); cMsg.textContent=text; cMsg.className="row-desc "+(bad?"bad":"flash"); cMsg.dataset.flash="1";
+  flashTimer=setTimeout(()=>{ delete cMsg.dataset.flash; if(state.creator) drawCreator(); },4500);
+}
+function buildFrom(){
+  const groups=[["Start",["Straight"]],["Stolperbeats",["Trip","Shake","Push","Clave"]],["Alt tables",["HOPP","DEEP","SQEZ","CLSTR","FOLD"]],["Yours",mineKeys()]];
+  cFrom.innerHTML=`<option value="" disabled>Pick one</option>`+groups.filter(g=>g[1].length).map(([g,ks])=>`<optgroup label="${g}">${ks.map(k=>`<option value="${k}">${k==="Straight"?"Straight":k.toUpperCase()}</option>`).join("")}</optgroup>`).join("");
+  cFrom.value=draft.from||"";
+}
+cFrom.addEventListener("change",()=>{ applyFrom(cFrom.value); refresh(); });
+document.querySelectorAll("#cLink button").forEach(b=>b.addEventListener("click",()=>{
+  draft.linked=b.dataset.v==="1";
+  if(draft.linked){ let changed=0; draft.levels.forEach(L=>{ if(L&&!isLinked(L)){ linkLevel(L); changed++; } });
+    if(changed) flash(`Beat 2 now copies beat 1 on ${changed} level${changed>1?"s":""}.`); }
+  saveDraft(); refresh(); }));
+document.querySelectorAll("#cSnap button").forEach(b=>b.addEventListener("click",()=>{ draft.snap=+b.dataset.v; saveDraft(); drawCreator(); }));
+GRIDS.forEach(N=>{ const b=document.createElement("button"); b.textContent=N; b.dataset.n=N; b.title=`${N} ticks per beat: ${N/4} slots of 4 ticks`;
+  b.addEventListener("click",()=>{ const s=state.shuffle; if(!s) return; const L=draft.levels[s-1]; if(L.N===N) return;
+    const nl=regrid(L,N,draft.snap); draft.levels[s-1]=draft.linked?linkLevel(nl):nl; saveDraft(); refresh(); });
+  cGrid.appendChild(b); });
+document.getElementById("cCopy").addEventListener("click",()=>{ const s=state.shuffle; if(!s) return;
+  draft.levels[s-1]=copyLevel(resolved(s-1)); if(draft.linked&&!isLinked(draft.levels[s-1])) linkLevel(draft.levels[s-1]);
+  saveDraft(); flash(`Level ${s} is now a copy of level ${s-1}.`); refresh(); });
+cName.addEventListener("input",()=>{ const v=cleanName(cName.value); if(v!==cName.value) cName.value=v; draft.name=v; saveDraft(); readout(); drawCreator(); });
+
+// Saved Timings: kept in this browser, shown with the alt tables in the visualiser.
+function loadMine(){ try{ const a=JSON.parse(localStorage.getItem(MINE_STORE)); return Array.isArray(a)?a.filter(t=>t&&/^[A-Z0-9]{1,5}$/.test(t.key)&&!RESERVED.has(t.key)&&Array.isArray(t.levels)&&t.levels.length===6&&t.levels.every(validLevel)):[]; }catch(e){ return []; } }
+function storeMine(list){ try{ localStorage.setItem(MINE_STORE,JSON.stringify(list)); return true; }catch(e){ return false; } }
+function registerMine(t){
+  let info=TIMINGS.find(x=>x.key===t.key);
+  if(!info){ info={key:t.key,mine:true}; TIMINGS.push(info); }
+  info.blurb="your own, from the creator"; info.desc=`${t.key}: your own Timing, made in the creator. Module rows only.`;
+  MODULE[t.key]=t.levels.map(L=>[L.N,L.pos.slice()]);
+  if(!tGroups.alt.querySelector(`[data-timing="${t.key}"]`)) addTimingButton(info,"var(--mine)");
+}
+loadMine().forEach(registerMine);
+document.getElementById("cSave").addEventListener("click",()=>{
+  const nm=cleanName(cName.value);
+  if(!nm) return flash("Give it a name first: up to 5 letters or numbers.",true);
+  if(RESERVED.has(nm)) return flash(`${nm} is already a built-in name. Pick another.`,true);
+  if(!draftRows().every(rowOk)) return flash("Something in the table breaks the module's rules, so it wasn't saved.",true);
+  const t={key:nm,linked:draft.linked,levels:[1,2,3,4,5,6].map(L=>copyLevel(resolved(L)))};
+  const list=loadMine().filter(x=>x.key!==nm), existed=mineKeys().includes(nm); list.push(t);
+  const kept=storeMine(list);
+  registerMine(t); draft.name=nm; savedHere=nm; saveDraft(); buildFrom();
+  flash(kept?`${existed?"Updated":"Saved"} ${nm}. It's with the alt tables in the visualiser.`:`Added ${nm} to the visualiser for now, but this browser won't keep it. Export a copy.`,!kept); drawCreator();
+});
+document.getElementById("cDelete").addEventListener("click",()=>{
+  const nm=cleanName(cName.value); if(!mineKeys().includes(nm)) return;
+  if(!window.confirm(`Delete ${nm} from this browser? Your draft stays as it is.`)) return;
+  storeMine(loadMine().filter(x=>x.key!==nm));
+  TIMINGS.splice(TIMINGS.findIndex(x=>x.key===nm),1); delete MODULE[nm];
+  tGroups.alt.querySelector(`[data-timing="${nm}"]`)?.parentElement.remove();
+  if(prevTiming===nm) prevTiming="Trip"; if(savedHere===nm) savedHere=null; if(draft.from===nm) draft.from="";
+  saveDraft(); buildFrom(); flash(`Deleted ${nm}.`); drawCreator();
+});
+// Export: the 7 rows as JSON, the same "stolperbeatsRows" shape as Download tables, so either can be imported.
+document.getElementById("cExport").addEventListener("click",()=>{
+  const nm=cleanName(cName.value)||"UNTITLED", rows=draftRows();
+  const json={style:nm,about:"Made in the Stolperbeats visualiser's timing creator.",note:"For Educational Purposes Only. Unofficial; no firmware included.",
+    linked:draft.linked,stolperbeatsRows:rows.map(r=>({ticksPerBeat:r.ticksPerBeat,stepLengths:r.stepLengths})),fireTicks:rows.map(r=>r.pos)};
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([JSON.stringify(json,null,1)],{type:"application/json"}));
+  a.download=`${nm}.timing.json`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  flash(`Exported ${nm}.timing.json.`);
+});
+const cFile=document.getElementById("cFile");
+document.getElementById("cImport").addEventListener("click",()=>cFile.click());
+function importTiming(obj){
+  const rows=obj&&obj.stolperbeatsRows;
+  if(!Array.isArray(rows)||rows.length!==7) throw new Error("it needs 7 Stolperbeats rows (stolperbeatsRows)");
+  const levels=rows.slice(1).map((r,i)=>{
+    const N=r&&r.ticksPerBeat, l=r&&r.stepLengths;
+    if(!GRIDS.includes(N)) throw new Error(`level ${i+1} is on ${N} ticks per beat, and the module grids are 16 to 36 in steps of 4`);
+    if(!Array.isArray(l)||l.length<8||l.slice(0,8).some(x=>!Number.isInteger(x)||x<1)) throw new Error(`level ${i+1} has a step shorter than 1 tick`);
+    const sum=l.slice(0,8).reduce((a,b)=>a+b,0); if(sum!==2*N) throw new Error(`level ${i+1}'s 8 steps add up to ${sum}, not ${2*N}`);
+    const pos=[0]; for(let k=0;k<7;k++) pos.push(pos[k]+l[k]); return {N,pos};
+  });
+  draft={...blankDraft(),snap:draft.snap,name:cleanName(obj.style),linked:levels.every(isLinked),levels};
+  return draft.name||"it";
+}
+cFile.addEventListener("change",async()=>{
+  const f=cFile.files[0]; cFile.value=""; if(!f) return;
+  try{ const nm=importTiming(JSON.parse(await f.text())); saveDraft(); buildFrom(); if(!state.creator) setCreator(true); else refresh(); flash(`Imported ${nm}. Name it and Save to add it to the visualiser.`); }
+  catch(err){ flash(`Couldn't import ${f.name}: ${err.message||"it isn't a timing file"}.`,true); }
+});
+
+function drawCreator(){
+  const s=state.shuffle;
+  touch(s); syncDraft();
+  if(document.activeElement!==cName) cName.value=draft.name;
+  if(document.activeElement!==cFrom) cFrom.value=draft.from||"";
+  document.querySelectorAll("#cLink button").forEach(b=>b.setAttribute("aria-pressed",String((b.dataset.v==="1")===draft.linked)));
+  document.querySelectorAll("#cSnap button").forEach(b=>b.setAttribute("aria-pressed",String(+b.dataset.v===draft.snap)));
+  const N=resolved(s).N;
+  cGrid.querySelectorAll("button").forEach(b=>{ b.setAttribute("aria-pressed",String(s>0&&+b.dataset.n===N)); b.disabled=!s; });
+  document.getElementById("cCopy").disabled=!s;
+  document.getElementById("cDelete").hidden=!mineKeys().includes(cleanName(cName.value));
+  document.getElementById("cSave").textContent=mineKeys().includes(cleanName(cName.value))?"Update in visualiser":"Save to visualiser";
+  const ok=draftRows().every(rowOk), notes=draftNotes(), badge=document.getElementById("cBadge");
+  badge.textContent=!ok?"BREAKS A RULE":notes.length?"MODULE READY · NOTES":"MODULE READY ✓";
+  badge.className="cbadge"+(ok&&!notes.length?"":" warn");
+  badge.title=ok?"Every row keeps to the module's rules: whole ticks, 16 to 36 ticks per beat, steps of at least 1 tick, 8 lengths adding up to 2N":"";
+  beat.setAttribute("tabindex",s?"0":"-1");
+  beat.setAttribute("aria-label",s?`Level ${s} of your Timing. Drag a step, or use the arrow keys.`:"Level 0, straight");
+  if(cMsg.dataset.flash) return;
+  cMsg.className="row-desc"+(notes.length?" warn":"");
+  cMsg.textContent=notes.length?`Notes: ${notes.join("; ")}.`
+    :s?"Drag steps 2 to 4 and 6 to 8 in the half-bar view below. Each new level starts as a copy of the one before."
+    :"Level 0 is straight on every Timing. Move the Shuffle slider to 1 to 6 to edit a level.";
+}
+function mineNote(s,N){
+  if(!s) return (state.creator?"Level 0 is straight 16ths on a 16-tick beat, on every Timing. Move the Shuffle slider to 1 to 6 to edit a level."
+    :"Straight 16ths on a 16-tick beat. Every step plays on its straight 16th.")+feelNote();
+  const c=MODULE[state.timing][s-1][1], p=c.length===8?c:c.concat(c.map(x=>x+N)), lens=p.map((x,k)=>(k<7?p[k+1]:2*N)-x).join(", ");
+  return `Each mark is one tick of a ${N}-tick beat, and the taller marks are its ${N/4} slots of 4 ticks. Numbers under the dots are the tick each step fires on. Step lengths: ${lens}.`+
+    (state.creator?` Drag steps 2 to 4 and 6 to 8. Steps 1 and 5 (ringed) stay put. ${draft.linked?"Beat 2 follows beat 1.":"Beats 1 and 2 are edited separately."} Click a step, then use the arrow keys: left and right move it, up and down pick another.`:"")+feelNote();
+}
+function creatorTable(){
+  const rows=draftRows(), s=state.shuffle, m="style=\"color:var(--muted)\"";
+  let h=`<tr><th>Level</th><th>Ticks per beat</th><th>Steps fire on (half bar)</th><th>Firmware row: 16 step lengths</th><th></th></tr>`;
+  rows.forEach((r,L)=>{ const own=L===0||!!draft.levels[L-1];
+    let from=L-1; while(from>0&&!draft.levels[from-1]) from--;
+    h+=`<tr${L===s?' class="cur"':""}><td>${L}</td><td class="mono">${r.ticksPerBeat}</td><td class="mono">${r.pos.join(" ")}</td><td class="mono lens">${r.stepLengths.join(" ")}</td><td ${m}>${L===0?"straight, fixed":own?"":`copy of level ${from} until you visit it`}</td></tr>`; });
+  return h;
+}
+
+// VISUALISER | CREATOR
+const modeBtns=document.querySelectorAll("#modeSw button");
+function setCreator(on){
+  if(on===state.creator) return;
+  if(on){
+    prevTiming=state.timing; savedHere=null; state.creator=true; state.timing="DRAFT";
+    if(!draft.from&&draft.levels.every(L=>!L)) applyFrom(loadable().includes(prevTiming)?prevTiming:"Straight");
+    if(!state.shuffle) state.shuffle=1;
+  } else {
+    state.creator=false; cSel=null; dragK=null;
+    state.timing=savedHere&&TIMINGS.some(t=>t.key===savedHere)?savedHere:TIMINGS.some(t=>t.key===prevTiming)?prevTiming:"Trip";
+  }
+  document.body.classList.toggle("creating",on);
+  modeBtns.forEach(b=>b.setAttribute("aria-pressed",String((b.dataset.mode==="1")===on)));
+  update();
+}
+modeBtns.forEach(b=>b.addEventListener("click",()=>setCreator(b.dataset.mode==="1")));
+buildFrom(); syncDraft();
+
+drawKits(); drawFeels(); drawBeats(); drawBanks(); drawModule(); update();
+
+// ---------- Firmware lab: patch the user's own official firmware file, and flash it over USB ----------
+// No firmware is in this page. The user opens the official .bin; we find the four Timing tables by their known values
+// (never by fixed addresses, so it works across versions and refuses anything it doesn't recognise), write the rows
+// the user picked, and hand the file back. Every mod is a list of byte writes, checked before anything is built.
+const FW={base:0x08000000, file:null, name:"", bytes:null, sha:"", ver:"", tables:null, nTable:null, built:null, builtName:"", recipeCustom:{}};
+const SLOTS=["Trip","Shake","Push","Clave"];
+// SHA-256 of official files checked here (a hash, not firmware), so the page can say "this is the official file".
+const KNOWN_OFFICIAL={"c04df924138322ad4ab6ee900fe596eb8e9e037da0454278865fb9a474befa34":"163"};
+const fwSel={Trip:"Factory",Shake:"Factory",Push:"Factory",Clave:"Factory"};
+const hex=n=>"0x"+n.toString(16).toUpperCase().padStart(8,"0");
+const sha256=async b=>[...new Uint8Array(await crypto.subtle.digest("SHA-256",b))].map(x=>x.toString(16).padStart(2,"0")).join("");
+// Find every place a list of numbers is stored, at 1, 2 or 4 bytes each, little-endian.
+function findSeq(b,vals,w){
+  const out=[], n=vals.length*w;
+  outer: for(let i=0;i+n<=b.length;i++){
+    for(let j=0;j<vals.length;j++){ let v=0; for(let k=0;k<w;k++) v|=b[i+j*w+k]<<(8*k); if((v>>>0)!==vals[j]) continue outer; }
+    out.push(i);
+  }
+  return out;
+}
+const factoryFlat=t=>DATA[t].flat();
+// Read the file: an STM32 image at 0x08000000, then the four 7x16 tables and the ticks-per-beat table.
+function analyseFirmware(b){
+  const r={ok:false,problems:[],notes:[]};
+  if(b.length<1024||b.length>2*1024*1024){ r.problems.push(`it's ${b.length} bytes, which isn't a firmware image this size`); return r; }
+  const w32=o=>(b[o]|b[o+1]<<8|b[o+2]<<16|b[o+3]<<24)>>>0, sp=w32(0), rv=w32(4);
+  if(!((sp>=0x20000000&&sp<=0x24100000)||(sp>=0x30000000&&sp<=0x30050000))||!(rv&1)||rv<0x08000000||rv>=0x08000000+b.length)
+    r.problems.push("it doesn't start like an STM32 firmware image");
+  let width=0; const tables={};
+  for(const w of [1,2,4]){ const hits=SLOTS.map(t=>findSeq(b,factoryFlat(t),w)); if(hits.some(h=>h.length)){ width=w; SLOTS.forEach((t,i)=>tables[t]=hits[i]); break; } }
+  if(!width){ r.problems.push("the four factory Timing tables aren't in it. Start from an unmodified official file"); return r; }
+  for(const t of SLOTS){
+    if(tables[t].length!==1){ r.problems.push(tables[t].length?`the ${t} table appears ${tables[t].length} times, so it's not safe to change`:`the factory ${t} table isn't in it, so it looks already modified. Start from the official file`); continue; }
+    tables[t]=tables[t][0];
+  }
+  if(r.problems.length) return r;
+  // Ticks per beat: one entry per row (28, the module's layout) or one per Shuffle setting (7)
+  const per28=[0,1,2,3].flatMap(()=>DATA.N), near=o=>Math.abs(o-(tables.Clave+112*width))<=64*width;
+  let nt=findSeq(b,per28,width).map(o=>({o,len:28}));
+  if(!nt.length) nt=findSeq(b,DATA.N,width).map(o=>({o,len:7}));
+  if(nt.length>1) nt=nt.filter(x=>near(x.o));
+  if(nt.length!==1){ r.problems.push("the ticks-per-beat table isn't where it's expected"); return r; }
+  r.nTable={...nt[0],width}; r.tables=tables; r.width=width; r.ok=true;
+  if(r.nTable.len===7) r.notes.push("This version has one ticks-per-beat value per Shuffle setting, so only styles on the factory grids can go in.");
+  return r;
+}
+
+// Rows for a slot choice: 7 rows of {ticksPerBeat, stepLengths[16]}. Factory rows come from the opened file itself.
+const fwStyles=()=>["HOPP","DEEP","SQEZ","CLSTR","FOLD"];
+function rowsFor(choice,slot){
+  const src=choice==="Factory"?slot:choice;
+  if(src.startsWith("Factory ")) return rowsFor("Factory",src.slice(8));
+  if(SLOTS.includes(src)) return DATA[src].map((lens,L)=>({ticksPerBeat:DATA.N[L],stepLengths:lens.slice()}));
+  if(FW.recipeCustom[src]) return FW.recipeCustom[src].map(r=>({ticksPerBeat:r.ticksPerBeat,stepLengths:r.stepLengths.slice()}));
+  const levels=levelsFrom(src);
+  return [straightLevel(16),...levels].map(L=>{ const lens=L.pos.map((p,k)=>(k<7?L.pos[k+1]:2*L.N)-p); return {ticksPerBeat:L.N,stepLengths:[...lens,...lens]}; });
+}
+function slotProblems(rows){
+  const p=[];
+  rows.forEach((r,L)=>{ if(!rowOk(r)) p.push(`level ${L} breaks the module's rules`); });
+  if(FW.nTable&&FW.nTable.len===7) rows.forEach((r,L)=>{ if(r.ticksPerBeat!==DATA.N[L]) p.push(`level ${L} needs ${r.ticksPerBeat} ticks per beat, this version only has ${DATA.N[L]}`); });
+  return p;
+}
+// The byte writes for the current picks. Throws if anything is off, so a bad build never gets made.
+function fwPatches(){
+  const t=FW.tables, w=FW.width, out=[];
+  const put=(o,v,why)=>{ for(let k=0;k<w;k++) out.push({o:o+k,v:(v>>>(8*k))&255,why}); };
+  SLOTS.forEach((slot,i)=>{
+    const ch=fwSel[slot]; if(ch==="Factory") return;
+    const rows=rowsFor(ch,slot), bad=slotProblems(rows);
+    if(bad.length) throw new Error(`${slot}: ${bad[0]}`);
+    rows.forEach((r,L)=>{ r.stepLengths.forEach((x,k)=>put(t[slot]+(L*16+k)*w,x,`${slot} level ${L}`));
+      if(FW.nTable.len===28) put(FW.nTable.o+(7*i+L)*w,r.ticksPerBeat,`${slot} level ${L} ticks per beat`); });
+  });
+  return out;
+}
+function fwBuild(){
+  const ps=fwPatches(), b=FW.bytes.slice(); let changed=0; const by=new Map(); // one line per table row that changed
+  for(const x of ps){ if(b[x.o]!==x.v){ b[x.o]=x.v; changed++; const g=by.get(x.why)||{start:x.o,end:x.o,why:x.why,n:0};
+    g.start=Math.min(g.start,x.o); g.end=Math.max(g.end,x.o); g.n++; by.set(x.why,g); } }
+  return {b,changed,ranges:[...by.values()].sort((p,q)=>p.start-q.start)};
+}
+// e.g. "PushDEEP-ClaveSQEZ": which buttons changed, and to what
+const recipeCode=()=>SLOTS.filter(s=>fwSel[s]!=="Factory").map(s=>s+fwSel[s].replace(/^Factory /,"")).join("-")||"factory";
+
+// ----- UI -----
+const fwInfo=document.getElementById("fwInfo"), fwOut=document.getElementById("fwOut"), fwStatus=document.getElementById("fwStatus");
+function drawFwSlots(){
+  const wrap=document.getElementById("fwSlots"); wrap.innerHTML="";
+  const mine=mineKeys(), custom=Object.keys(FW.recipeCustom).filter(k=>!mine.includes(k));
+  let anyBad=false;
+  for(const slot of SLOTS){
+    const d=document.createElement("div"), ch=fwSel[slot]; d.className="fwslot"+(ch==="Factory"?"":" changed");
+    const opt=(v,l)=>`<option value="${v}"${v===ch?" selected":""}>${l}</option>`;
+    d.innerHTML=`<div class="lbl">${slot.toUpperCase()} BUTTON</div><select aria-label="${slot} button plays">${opt("Factory",`Factory ${slot}`)}
+      <optgroup label="Factory tables">${SLOTS.filter(x=>x!==slot).map(x=>opt("Factory "+x,`Factory ${x}`)).join("")}</optgroup>
+      <optgroup label="Styles from this page">${fwStyles().map(x=>opt(x,x)).join("")}</optgroup>
+      ${mine.length||custom.length?`<optgroup label="Yours">${[...mine,...custom].map(x=>opt(x,x)).join("")}</optgroup>`:""}</select><div class="meta"></div>`;
+    const rows=rowsFor(ch,slot), bad=FW.tables?slotProblems(rows):rows.some(r=>!rowOk(r))?["breaks the module's rules"]:[];
+    anyBad=anyBad||bad.length>0;
+    d.querySelector(".meta").innerHTML=bad.length?`<span class="bad">${bad[0]}</span>`:`Ticks per beat, levels 0 to 6: ${rows.map(r=>r.ticksPerBeat).join(" ")}`;
+    d.querySelector("select").addEventListener("change",e=>{ fwSel[slot]=e.target.value; FW.built=null; drawFw(); });
+    const aud=document.createElement("button"); aud.className="dl aud"; aud.type="button"; aud.textContent="Hear it";
+    aud.title="Play this style in the visualiser above";
+    aud.addEventListener("click",()=>{ const src=ch==="Factory"?slot:ch.replace(/^Factory /,"");
+      if(FW.recipeCustom[src]&&!TIMINGS.find(x=>x.key===src)) return fwMsg(fwOut,`${src} came from a recipe. Import it in the creator to hear it.`,true);
+      if(state.creator) setCreator(false);
+      state.timing=src; if(state.shuffle===0) state.shuffle=4; update(); document.querySelector(".panel").scrollIntoView({behavior:"smooth",block:"start"}); });
+    d.appendChild(aud); wrap.appendChild(d);
+  }
+  return anyBad;
+}
+function fwMsg(el,html,bad){ el.innerHTML=bad?`<span class="bad">${html}</span>`:html; }
+function drawFw(){
+  const anyBad=drawFwSlots(), changes=SLOTS.filter(s=>fwSel[s]!=="Factory").length;
+  document.getElementById("fwSlotNote").textContent="Swapping a table keeps each button's other behaviour: its accents, and which Shuffle levels roll on every tick. "+
+    "The same kind of swap ran on a real module in test builds 164 to 166. Make your own styles in the CREATOR and they show up here under Yours.";
+  document.getElementById("fwBuild").disabled=!FW.tables||!changes||anyBad;
+  document.getElementById("fwBuild").title=!FW.tables?"Open the official .bin first":!changes?"Pick at least one mod":anyBad?"Fix the slot marked in orange":"";
+  document.getElementById("fwFlash").disabled=!FW.built||!dfu.dev;
+  document.getElementById("fwRestore").disabled=!FW.bytes||!dfu.dev;
+  document.getElementById("fwCmd").textContent=`sudo dfu-util -a 0 -s 0x08000000 -D ${FW.builtName||"your-build.bin"}`;
+}
+async function openFirmware(f){
+  const b=new Uint8Array(await f.arrayBuffer()), r=analyseFirmware(b);
+  FW.built=null; fwOut.innerHTML="";
+  if(!r.ok){ FW.bytes=null; FW.tables=null; fwMsg(fwInfo,`${f.name}: ${r.problems[0]}. Nothing was changed.`,true); drawFw(); return; }
+  Object.assign(FW,{file:f,name:f.name,bytes:b,tables:r.tables,nTable:r.nTable,width:r.width,ver:(f.name.match(/-(\d+)\.bin$/i)||[])[1]||"",sha:await sha256(b)});
+  const official=KNOWN_OFFICIAL[FW.sha];
+  fwInfo.innerHTML=`<span class="ok">✓</span> <b>${f.name}</b>, ${(b.length/1024).toFixed(0)} KB${FW.ver?`, version ${FW.ver}`:""}${official?`, <span class="ok">matches the official ${official} release</span>`:""}. `+
+    `Found the four Timing tables (${SLOTS.map(t=>`${t} ${hex(FW.base+r.tables[t])}`).join(", ")}) and the ticks-per-beat table (${hex(FW.base+r.nTable.o)}, ${r.nTable.len} entries). `+
+    `SHA-256 <span class="mono">${FW.sha.slice(0,16)}…</span>`+(r.notes.length?` <span class="bad">${r.notes.join(" ")}</span>`:"");
+  drawFw();
+}
+document.getElementById("fwOpen").addEventListener("click",()=>document.getElementById("fwFile").click());
+document.getElementById("fwFile").addEventListener("change",e=>{ const f=e.target.files[0]; e.target.value=""; if(f) openFirmware(f); });
+const fwCard=document.getElementById("fwCard");
+fwCard.addEventListener("dragover",e=>{ e.preventDefault(); fwCard.classList.add("dragging"); });
+fwCard.addEventListener("dragleave",()=>fwCard.classList.remove("dragging"));
+fwCard.addEventListener("drop",e=>{ e.preventDefault(); fwCard.classList.remove("dragging"); const f=[...e.dataTransfer.files][0]; if(!f) return;
+  fwCard.open=true; if(/\.json$/i.test(f.name)) f.text().then(openRecipe); else openFirmware(f); });
+document.getElementById("fwBuild").addEventListener("click",()=>{
+  try{
+    const {b,changed,ranges}=fwBuild(), code=recipeCode();
+    FW.built=b; FW.builtName=`${FW.name.replace(/\.bin$/i,"")}-mod-${code}.bin`.replace(/^_+/,"");
+    download(FW.builtName,new Blob([b],{type:"application/octet-stream"}));
+    sha256(b).then(h=>{ FW.builtSha=h; fwOut.innerHTML=`<span class="ok">✓</span> Built <b>${FW.builtName}</b>: ${changed} bytes changed in ${ranges.length} place${ranges.length>1?"s":""}. SHA-256 <span class="mono">${h.slice(0,16)}…</span>`+
+      `<pre class="fwlog">${ranges.map(x=>`${hex(FW.base+x.start)}  ${String(x.n).padStart(2)} byte${x.n>1?"s":" "}  ${x.why}`).join("\n")}</pre>`; drawFw(); });
+  }catch(err){ fwMsg(fwOut,`Not built: ${err.message}.`,true); }
+});
+// Recipes: the picks plus any of your own timings' rows, so someone else can rebuild the same firmware from their own file
+function recipe(){
+  const custom={};
+  for(const s of SLOTS){ const c=fwSel[s]; if(c!=="Factory"&&!c.startsWith("Factory ")&&!fwStyles().includes(c)) custom[c]=rowsFor(c,s).map(r=>({ticksPerBeat:r.ticksPerBeat,stepLengths:r.stepLengths})); }
+  return {stolperbeatsFirmwareRecipe:1,note:"Mods only, no firmware. Open it in the Firmware lab with your own official file.",
+    base:FW.bytes?{file:FW.name,version:FW.ver,sha256:FW.sha}:null,buttons:{...fwSel},custom};
+}
+function openRecipe(text){
+  try{
+    const o=JSON.parse(text); if(!o||o.stolperbeatsFirmwareRecipe!==1||!o.buttons) throw new Error("not a Firmware lab recipe");
+    const custom={}; for(const [k,rows] of Object.entries(o.custom||{})){
+      if(!/^[A-Z0-9]{1,5}$/.test(k)||!Array.isArray(rows)||rows.length!==7) throw new Error(`${k} isn't 7 rows`);
+      const rr=rows.map(r=>({ticksPerBeat:+r.ticksPerBeat,stepLengths:(r.stepLengths||[]).map(Number)}));
+      if(!rr.every(r=>r.stepLengths.length===16&&rowOk(r))) throw new Error(`${k} breaks the module's rules`); custom[k]=rr; }
+    const ok=v=>v==="Factory"||SLOTS.some(s=>v==="Factory "+s)||fwStyles().includes(v)||custom[v]||mineKeys().includes(v);
+    for(const s of SLOTS) if(!ok(o.buttons[s])) throw new Error(`${s}: ${o.buttons[s]} isn't available here`);
+    FW.recipeCustom=custom; SLOTS.forEach(s=>fwSel[s]=o.buttons[s]); FW.built=null; drawFw();
+    const warn=o.base&&FW.sha&&o.base.sha256&&o.base.sha256!==FW.sha?` It was made from ${o.base.file||"a different file"}, not the one you opened, so check the slots before building.`:"";
+    fwMsg(fwOut,`Recipe loaded.${warn}`,!!warn);
+  }catch(err){ fwMsg(fwOut,`Couldn't open that recipe: ${err.message}.`,true); }
+}
+document.getElementById("fwRecipe").addEventListener("click",()=>download(`stolperbeats-recipe-${recipeCode()}.json`,new Blob([JSON.stringify(recipe(),null,1)],{type:"application/json"})));
+document.getElementById("fwRecipeOpen").addEventListener("click",()=>document.getElementById("fwRecipeFile").click());
+document.getElementById("fwRecipeFile").addEventListener("change",e=>{ const f=e.target.files[0]; e.target.value=""; if(f) f.text().then(openRecipe); });
+
+// ----- Flashing: the STM32's built-in USB DFU bootloader (DfuSe), the same one dfu-util talks to -----
+// The bootloader is in the chip's ROM, so a bad flash can always be fixed by flashing the official file again.
+const DFU_REQ={DNLOAD:1,UPLOAD:2,GETSTATUS:3,CLRSTATUS:4,ABORT:6}, ST={IDLE:2,DNSYNC:3,DNBUSY:4,DNIDLE:5,UPIDLE:9,ERROR:10};
+const dfu={dev:null,intf:0,alt:0,xfer:1024,segs:[]};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+// "@Internal Flash  /0x08000000/16*128Kg" -> [{start,size,erasable,writable}]
+function parseDfuseLayout(name){
+  const segs=[], parts=String(name||"").split("/");
+  for(let i=1;i+1<parts.length;i+=2){
+    let addr=parseInt(parts[i].trim(),16);
+    for(const spec of parts[i+1].split(",")){
+      const m=spec.trim().match(/^(\d+)\*(\d+)\s*([ KM]?)([a-g])$/i); if(!m) continue;
+      const size=+m[2]*({K:1024,M:1048576}[m[3].toUpperCase()]||1), perm=m[4].toLowerCase().charCodeAt(0)-96;
+      for(let k=0;k<+m[1];k++){ segs.push({start:addr,size,erasable:!!(perm&2),writable:!!(perm&4)}); addr+=size; }
+    }
+  }
+  return segs;
+}
+const ctl=(req,value)=>({requestType:"class",recipient:"interface",request:req,value,index:dfu.intf});
+async function dOut(req,value,data){ const r=await dfu.dev.controlTransferOut(ctl(req,value),data||new Uint8Array(0)); if(r.status!=="ok") throw new Error(`USB ${r.status}`); }
+async function dIn(req,value,len){ const r=await dfu.dev.controlTransferIn(ctl(req,value),len); if(r.status!=="ok") throw new Error(`USB ${r.status}`); return new Uint8Array(r.data.buffer,r.data.byteOffset,r.data.byteLength); }
+async function dStatus(){ const d=await dIn(DFU_REQ.GETSTATUS,0,6); return {status:d[0],poll:d[1]|d[2]<<8|d[3]<<16,state:d[4]}; }
+async function dWait(){ // after a download: poll until the device has finished
+  for(let i=0;i<20000;i++){ const s=await dStatus(); if(s.status) throw new Error(`the module reported error ${s.status}`);
+    if(s.state===ST.DNBUSY||s.state===ST.DNSYNC){ await sleep(Math.max(1,s.poll)); continue; } return s; }
+  throw new Error("timed out");
+}
+async function dIdle(){
+  let s=await dStatus(); if(s.state===ST.ERROR){ await dOut(DFU_REQ.CLRSTATUS,0); s=await dStatus(); }
+  if(s.state!==ST.IDLE){ await dOut(DFU_REQ.ABORT,0); s=await dStatus(); }
+  if(s.state!==ST.IDLE) throw new Error(`the bootloader is busy (state ${s.state})`);
+}
+async function dCmd(bytes){ await dOut(DFU_REQ.DNLOAD,0,new Uint8Array(bytes)); const s=await dWait(); if(s.state!==ST.DNIDLE) throw new Error(`command ${bytes[0].toString(16)} failed (state ${s.state})`); }
+const le32=a=>[a&255,(a>>>8)&255,(a>>>16)&255,(a>>>24)&255];
+async function dfuConnect(){
+  if(!navigator.usb) throw new Error("this browser can't flash over USB. Use Chrome or Edge on a computer, or dfu-util below");
+  const dev=await navigator.usb.requestDevice({filters:[{vendorId:0x0483,productId:0xdf11}]});
+  await dev.open(); if(dev.configuration===null) await dev.selectConfiguration(1);
+  const cands=[]; // DFU interfaces; the internal flash one is what dfu-util -a 0 picks on these chips
+  for(const itf of dev.configuration.interfaces) for(const a of itf.alternates)
+    if(a.interfaceClass===0xfe&&a.interfaceSubclass===1) cands.push({intf:itf.interfaceNumber,alt:a.alternateSetting,name:a.interfaceName||""});
+  const pick=cands.find(c=>/^@Internal Flash/i.test(c.name))||cands[0];
+  if(!pick) throw new Error("that device isn't an STM32 DFU bootloader");
+  await dev.claimInterface(pick.intf); await dev.selectAlternateInterface(pick.intf,pick.alt);
+  Object.assign(dfu,{dev,intf:pick.intf,alt:pick.alt,segs:parseDfuseLayout(pick.name)});
+  // wTransferSize from the DFU functional descriptor in the configuration descriptor
+  try{ const h=await dev.controlTransferIn({requestType:"standard",recipient:"device",request:6,value:0x0200,index:0},9);
+    const tot=new DataView(h.data.buffer).getUint16(2,true), c=await dev.controlTransferIn({requestType:"standard",recipient:"device",request:6,value:0x0200,index:0},tot);
+    const d=new Uint8Array(c.data.buffer); for(let i=0;i<d.length&&d[i];i+=d[i]) if(d[i+1]===0x21&&d[i]>=7){ dfu.xfer=d[i+5]|d[i+6]<<8; break; } }catch(e){}
+  if(!dfu.segs.length) throw new Error(`can't read the flash layout ("${pick.name}")`);
+  return pick.name;
+}
+async function dfuFlash(image,onStep){
+  const start=FW.base, end=start+image.length, segs=dfu.segs.filter(s=>s.start<end&&s.start+s.size>start);
+  if(!segs.length||end>dfu.segs[dfu.segs.length-1].start+dfu.segs[dfu.segs.length-1].size) throw new Error("the image doesn't fit this chip's flash");
+  if(segs.some(s=>!s.erasable||!s.writable)) throw new Error("part of that flash is read-only");
+  await dIdle();
+  for(let i=0;i<segs.length;i++){ onStep("Erasing",i/segs.length); await dCmd([0x41,...le32(segs[i].start)]); }
+  const X=dfu.xfer;
+  for(let off=0;off<image.length;off+=X){
+    onStep("Writing",off/image.length);
+    await dCmd([0x21,...le32(start+off)]);
+    await dOut(DFU_REQ.DNLOAD,2,image.subarray(off,Math.min(off+X,image.length)));
+    const s=await dWait(); if(s.state!==ST.DNIDLE) throw new Error(`write failed at ${hex(start+off)}`);
+  }
+  // Read it back and compare, so a bad write is caught here and not on stage
+  await dIdle(); await dCmd([0x21,...le32(start)]); await dIdle();
+  const back=new Uint8Array(image.length);
+  for(let off=0,blk=2;off<image.length;off+=X,blk++){ onStep("Checking",off/image.length);
+    const d=await dIn(DFU_REQ.UPLOAD,blk,Math.min(X,image.length-off)); back.set(d.subarray(0,Math.min(X,image.length-off)),off); }
+  await dIdle();
+  for(let i=0;i<image.length;i++) if(back[i]!==image[i]) throw new Error(`check failed at ${hex(start+i)}. Flash it again, or flash the official file`);
+  onStep("Starting",1);
+  try{ await dCmd([0x21,...le32(start)]); await dOut(DFU_REQ.DNLOAD,0); await dStatus(); }catch(e){} // the module leaves DFU and restarts
+  try{ await dfu.dev.close(); }catch(e){}
+  dfu.dev=null;
+}
+const fwProg=document.getElementById("fwProg");
+document.getElementById("fwConnect").addEventListener("click",async()=>{
+  try{ const name=await dfuConnect(); fwMsg(fwStatus,`<span class="ok">✓</span> Connected to the bootloader (${name.trim()||"STM32 DFU"}, ${dfu.segs.length} flash sectors, ${dfu.xfer}-byte blocks).`); }
+  catch(err){ if(err.name!=="NotFoundError") fwMsg(fwStatus,`Couldn't connect: ${err.message}.`,true); else fwMsg(fwStatus,"No module picked. It shows up as <b>STM32 BOOTLOADER</b> or <b>DFU in FS Mode</b> once you've done BOOT and RESET."); }
+  drawFw();
+});
+async function runFlash(image,label){
+  if(!dfu.dev) return;
+  if(!confirm(`Flash ${label} to the module? Keep the USB cable in until it says done.`)) return;
+  fwProg.hidden=false; fwProg.value=0;
+  try{
+    await dfuFlash(image,(what,f)=>{ fwProg.value=f; fwStatus.textContent=`${what}… ${Math.round(f*100)}%`; });
+    fwProg.value=1; fwMsg(fwStatus,`<span class="ok">✓</span> Done: ${label} is on the module and checked byte for byte. If it doesn't restart by itself, press RESET.`);
+  }catch(err){ fwMsg(fwStatus,`Stopped: ${err.message}. The bootloader is still there: do BOOT and RESET again and flash the official file to get back to normal.`,true); dfu.dev=null; }
+  drawFw();
+}
+document.getElementById("fwFlash").addEventListener("click",()=>FW.built&&runFlash(FW.built,FW.builtName));
+document.getElementById("fwRestore").addEventListener("click",()=>FW.bytes&&runFlash(FW.bytes,FW.name));
+if(navigator.usb) navigator.usb.addEventListener("disconnect",e=>{ if(e.device===dfu.dev){ dfu.dev=null; drawFw(); } });
+
+drawFw();
+</script>
+</body>
+</html>
