@@ -25,6 +25,7 @@ Pick a Timing, turn the Shuffle control and press Play. Audio starts on your fir
 - **A close-up** of half a bar, with the tick each step lands on and its offset in ms.
 - **A timing creator** for making your own tables by hand.
 - **Download MIDI** of all 4 bars, swing and all.
+- **Ratchets and pitch per step** (experimental), modelling a proposed firmware mod.
 
 ## Timings
 
@@ -146,6 +147,31 @@ Mods live in `fwPatches()` in `index.html`. A mod is a list of byte writes. The 
 - Keep the module's own rules (for Timings: whole ticks, 16 to 36 ticks per beat in steps of 4, the half bar adds up to 2N). Check them before building, and throw if they fail.
 - Never add firmware bytes to the repo. Values you search for should be small and documented, like the timing tables.
 
+## Ratchets and pitch (experimental)
+
+Not on the module today. This models a proposed firmware mod, so you can hear and program it before any firmware work.
+
+- **Draw** above the grid picks what a click edits: **HITS**, **RATCHET** or **PITCH**.
+- **RATCHET:** click a hit to step it through 1, 2 (32nds), 3 and 4 hits per step. Shift-click steps back, or scroll over the hit. Extra hits land on whole ticks inside the step, the way the module would fire them, so they swing with the Timing.
+- **PITCH:** drag a hit up or down, up to 2 octaves each way. Scroll for a semitone, Shift-scroll for an octave, double-click to reset. On the module this would change the MIDI note only; the trigger outs have no pitch.
+- Rolls still owns Hihat 2, so Hihat 2 ratchets rest while Rolls is on.
+- Erasing a hit clears its ratchet and pitch. Copy to all bars copies them with the Kick and Snare.
+- Both play here, export in Download MIDI, and save with your beat and your banks.
+
+**Planned module controls:** in Pattern Edit, turn Shuffle 0 to 3 to set the ratchet on the step under the cursor. Hold Tap and turn the track's encoder to set its pitch.
+
+### Side file: PatternExtNNN.txt
+
+A bank's ratchets and pitch go in a side file next to its PatternBank file, so the PatternBank file stays exactly the module's format. Only patterns that use them get lines:
+
+```
+STOLPERBEATS PATTERN EXT 1
+KICK > PTN3 RATCHET: 1111211111111111, 1111111111111111, 1111111111111111, 1111111111111111;
+HIHAT1 > PTN0 PITCH: 0 0 +12 0 0 0 0 0 0 0 0 0 -5 0 0 0;
+```
+
+Ratchets are one digit per step (1 to 4). Pitch is one signed number per step (-24 to +24). Kick and Snare have four blocks of 16, the others one. Windows line endings. **Download bank** zips both files when the bank has any; **Import from SD** takes both, PatternBank files first.
+
 ## Linear
 
 From the module, next to the grid. When tracks clash on a step only the highest priority one plays: Snare beats Kick, both beat the hats and percs, open hat beats closed, Perc 2 beats Perc 1. Hats and percs don't silence each other. Silenced hits show as dashed outlines.
@@ -156,7 +182,7 @@ The button by the Timings saves the selected **alt table** as a zip: a README, t
 
 ## Download MIDI
 
-The **Download MIDI** button above the grid saves all 4 bars exactly as they play, swing and all, so the groove survives in Ableton or any DAW even on a straight grid: every hit where the grid shows it, with the Timing, Shuffle, Feel and Rolls, accents as velocity, at the current tempo. Muted tracks and hits Linear silences are left out. It's four bars of GM drums on channel 10 (Kick 36, Snare 38, Hihat 1 42, Hihat 2 46, Perc 1 39, Perc 2 63) at 960 ticks per beat, so hits are placed to within 1/960 of a beat. The file name says what it is, e.g. `stolperbeats-Boom-bap-SQEZ-5-Tight-90-bpm.mid`.
+The **Download MIDI** button above the grid saves all 4 bars exactly as they play, swing and all, so the groove survives in Ableton or any DAW even on a straight grid: every hit where the grid shows it, with the Timing, Shuffle, Feel, Rolls, step ratchets and pitch, accents as velocity, at the current tempo. Muted tracks and hits Linear silences are left out. It's four bars of GM drums on channel 10 (Kick 36, Snare 38, Hihat 1 42, Hihat 2 46, Perc 1 39, Perc 2 63) at 960 ticks per beat, so hits are placed to within 1/960 of a beat. The file name says what it is, e.g. `stolperbeats-Boom-bap-SQEZ-5-Tight-90-bpm.mid`.
 
 ## Creator
 

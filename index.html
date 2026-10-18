@@ -10,21 +10,21 @@
   --bg:#f5f4f0;--panel:#ffffff;--text:#1a1a19;--muted:#68665f;--line:#dcd9d1;--grid:#e9e7e0;
   --beat:#9a978d;--slot:#c9c5ba;--ghost:#a9a69c;--late:#cf3426;--early:#2c67cf;--on:#1a1a19;
   --chip:#efede7;--accent:#cf3426;--accent-ink:#fff;--track:#e3e0d8;--ok:#2f8f4e;--warn:#b7791f;
-  --orange:#e8590c;--green:#1f9d55;--green-soft:#e3f4ea;--green-ink:#fff;--empty:#d6d3ca;
+  --orange:#e8590c;--green:#1f9d55;--green-soft:#e3f4ea;--green-ink:#fff;--empty:#d6d3ca;--ext:#7048e8;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#10100f;--panel:#1a1a18;--text:#ecebe6;--muted:#9c9a90;--line:#33322d;--grid:#262521;
     --beat:#76746b;--slot:#45443e;--ghost:#605e57;--late:#ff6a5c;--early:#6d9fff;--on:#ecebe6;
     --chip:#25241f;--accent:#ff5546;--accent-ink:#fff;--track:#2c2b27;--ok:#5ccf83;--warn:#e9b04f;
-    --orange:#ff8a3d;--green:#2fbf6b;--green-soft:#173524;--green-ink:#08140d;--empty:#3a3934;
+    --orange:#ff8a3d;--green:#2fbf6b;--green-soft:#173524;--green-ink:#08140d;--empty:#3a3934;--ext:#a991ff;
   }
 }
 :root[data-theme="dark"]{
   --bg:#10100f;--panel:#1a1a18;--text:#ecebe6;--muted:#9c9a90;--line:#33322d;--grid:#262521;
   --beat:#76746b;--slot:#45443e;--ghost:#605e57;--late:#ff6a5c;--early:#6d9fff;--on:#ecebe6;
   --chip:#25241f;--accent:#ff5546;--accent-ink:#fff;--track:#2c2b27;--ok:#5ccf83;--warn:#e9b04f;
-  --orange:#ff8a3d;--green:#2fbf6b;--green-soft:#173524;--green-ink:#08140d;--empty:#3a3934;
+  --orange:#ff8a3d;--green:#2fbf6b;--green-soft:#173524;--green-ink:#08140d;--empty:#3a3934;--ext:#a991ff;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,sans-serif}
@@ -238,6 +238,17 @@ main{padding-top:14px}
 .btab.playing::after{content:"";position:absolute;left:8px;right:8px;bottom:-4px;height:2px;border-radius:2px;background:var(--accent)}
 .follow{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--muted);cursor:pointer;user-select:none}
 .follow input{margin:0;accent-color:var(--accent)}
+/* Step tools: hits, ratchets and pitch (experimental) */
+.steptools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:2px 0 4px}
+.steptools .kitlabel{font-size:12px;color:var(--muted);font-weight:600}
+.steptools .seg button{padding:4px 10px;font-size:12.5px;letter-spacing:.03em}
+.steptools .seg button[data-tool=ratchet][aria-pressed=true],.steptools .seg button[data-tool=pitch][aria-pressed=true]{background:var(--ext);color:#fff}
+.exptag{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ext);border:1px solid var(--ext);border-radius:5px;padding:1px 6px}
+.toolnote{font-size:12.5px;color:var(--muted);flex:1 1 320px;line-height:1.4}
+#bar.tool-ratchet,#bar.tool-pitch{cursor:ns-resize}
+#bar.tool-ratchet{cursor:pointer}
+.legend i.exttick{width:3px;height:12px;border-radius:1px;background:var(--ext);vertical-align:-2px}
+.legend i.extnum{width:auto;height:auto;border-radius:0;font-style:normal;font-weight:700;font-size:11px;color:var(--ext);margin-right:5px}
 .barnote{font-size:12px;color:var(--muted)}
 /* Pattern banks: bank chips, the 24 pattern slots with mini maps, and the load/save bar */
 #bankCard .bankbody{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
@@ -432,7 +443,7 @@ body:not(.creating) #creatorrow,body.creating #timingrow{display:none}
     <div class="barhead"><h2 id="barTitle">Bar 1 of 4</h2><span class="status" id="status"></span>
       <div class="barctl">
         <div class="seg srcseg" id="srcSeg" role="group" aria-label="What the grid plays"><button data-src="sketch" aria-pressed="true" title="Presets and your own beat">SKETCH</button><button data-src="module" aria-pressed="false" title="Your pattern banks, picked like the module: a bank, then a pattern per track">MODULE</button></div>
-        <button class="dl" id="dlMidi" title="Download all 4 bars as a MIDI file: what plays, with the Timing, Shuffle, Feel and Rolls. Muted tracks and hits Linear silences are left out.">Download MIDI</button>
+        <button class="dl" id="dlMidi" title="Download all 4 bars as a MIDI file: what plays, with the Timing, Shuffle, Feel, Rolls, and step ratchets and pitch. Muted tracks and hits Linear silences are left out.">Download MIDI</button>
         <span class="kitlabel">Linear</span><div class="tiles" id="linear" role="group" aria-label="Linear"></div>
         <span class="kitlabel">Kit</span><div class="seg" id="kits" role="group" aria-label="Drum kit"></div>
       </div>
@@ -456,6 +467,12 @@ body:not(.creating) #creatorrow,body.creating #timingrow{display:none}
       <button class="dl" id="copyBar" title="Copy this bar's Kick and Snare to the other three bars">Copy to all bars</button>
       <span class="barnote">Kick and Snare run 4 bars. Hats and Percs loop 1 bar under them.</span>
     </div>
+    <div class="steptools">
+      <span class="kitlabel">Draw</span>
+      <div class="seg" id="toolSeg" role="group" aria-label="What a click on the grid edits"><button data-tool="hits" aria-pressed="true">HITS</button><button data-tool="ratchet" aria-pressed="false">RATCHET</button><button data-tool="pitch" aria-pressed="false">PITCH</button></div>
+      <span class="exptag" title="Ratchets and pitch are not on the module. They model a proposed firmware mod.">Experimental</span>
+      <span class="toolnote" id="toolNote"></span>
+    </div>
     <div class="scroll"><svg id="bar" viewBox="0 0 1000 272" role="img" aria-label="One bar of the 4-bar pattern on six tracks. Click or drag to place hits."></svg></div>
     <div class="legend">
       <span><i style="background:var(--on)"></i>on the grid</span>
@@ -463,9 +480,11 @@ body:not(.creating) #creatorrow,body.creating #timingrow{display:none}
       <span><i style="background:var(--early)"></i>pulled early</span>
       <span><i style="border:1.5px solid var(--ghost)"></i>where the straight 16th would be</span>
       <span><i class="rolltick"></i>ratchets (Rolls)</span>
+      <span><i class="exttick"></i>step ratchets</span>
+      <span><i class="extnum">+7</i>step pitch</span>
       <span><i style="border:1.5px dashed var(--muted)"></i>silenced by Linear</span>
     </div>
-    <p class="hint">Click anywhere to place a hit on the nearest step, or hold and drag to draw several. Start on a hit to erase instead. Use the M button beside a track to mute it. Pick a Bar tab to write Kick and Snare in bars 2 to 4.</p>
+    <p class="hint">With Draw on HITS, click anywhere to place a hit on the nearest step, or hold and drag to draw several. Start on a hit to erase instead. Use the M button beside a track to mute it. Pick a Bar tab to write Kick and Snare in bars 2 to 4. RATCHET and PITCH edit the hits already there.</p>
   </section>
 
   <details class="card sources" id="bankCard">
@@ -549,8 +568,9 @@ body:not(.creating) #creatorrow,body.creating #timingrow{display:none}
       <p><b>Four bars.</b> Like the module, Kick and Snare run 4 bars (64 steps) and the hats and percs loop 1 bar (16 steps) under them. The Bar tabs pick which bar the grid shows and edits; each tab has a mini map of its Kick (top) and Snare (bottom). Follow keeps the grid on the bar that's playing; pick a tab while playing to stay on that bar and edit it while the loop runs. In bars 2 to 4 the hats and percs are dimmed because they're bar 1 repeating. Copy to all copies the shown bar's Kick and Snare into the other three.</p>
       <p><b>SKETCH and MODULE.</b> The switch above the grid picks what it plays. SKETCH is the presets and your own beat. MODULE plays your pattern banks the way the module does: pick a Bank, then a pattern number for each of the six tracks. Edits go straight into the bank.</p>
       <p><b>Pattern banks.</b> Import the PatternBank files from your Stolperbeats SD card, browse each track's 24 patterns, edit them in MODULE mode or send a SKETCH beat into a bank, and download the bank to copy onto the card. Files come out in exactly the module's own format, byte for byte. No banks are included with this page: bring your own from your card.</p>
+      <p><b>Ratchets and pitch (experimental).</b> Not on the module today: this models a proposed firmware mod so you can hear it first. The Draw switch above the grid picks what a click edits. RATCHET gives a step 1 to 4 hits (2 is 32nds), placed on whole ticks inside the step the way the module would fire them, so they swing with the Timing. PITCH tunes a step up to 2 octaves up or down; on the module it would change the MIDI note only, since the trigger outs have no pitch. Rolls still owns Hihat 2, so its ratchets rest while Rolls is on. Both play here, export in Download MIDI, and save with your beat and your banks. A bank keeps them in a side file, PatternExtNNN.txt, so its PatternBank file stays exactly the module's format.</p>
       <p><b>Firmware lab.</b> Build your own experimental firmware from the official file: give each Timing button a different table (factory, an alt table, or your own from the creator), then flash it over USB. The page never contains firmware. You bring the official file, and recipes let others rebuild the same mods from theirs.</p>
-      <p><b>Download MIDI.</b> The button above the grid saves all 4 bars exactly as they play, swing and all, so the groove survives on a straight DAW grid: every hit where the grid shows it, with the Timing, Shuffle, Feel and Rolls, accents as velocity, at the current tempo. Muted tracks and hits Linear silences are left out. It's four bars of GM drums (Kick 36, Snare 38, Hihat 1 42, Hihat 2 46, Perc 1 39, Perc 2 63) at 960 ticks per beat.</p>
+      <p><b>Download MIDI.</b> The button above the grid saves all 4 bars exactly as they play, swing and all, so the groove survives on a straight DAW grid: every hit where the grid shows it, with the Timing, Shuffle, Feel and Rolls, step ratchets and pitch, accents as velocity, at the current tempo. Muted tracks and hits Linear silences are left out. It's four bars of GM drums (Kick 36, Snare 38, Hihat 1 42, Hihat 2 46, Perc 1 39, Perc 2 63) at 960 ticks per beat.</p>
       <p><b>Creator.</b> The CREATOR switch at the top swaps the Timing row for a table maker, with the same grid, kits, Feels and playback. Start from a Timing or from straight, then drag the steps in the half-bar view while it plays. The Shuffle slider picks the level you're editing, and a level you haven't touched yet starts as a copy of the one before. Every Timing made here keeps to the module's rules: whole ticks, 16 to 36 ticks per beat in steps of 4, every step at least 1 tick, and the half bar's 8 lengths adding up to 2N. Save adds it to the alt tables, Export saves its 7 rows as a file, and Import loads one back. Saved Timings stay in this browser only, so export the ones you want to keep.</p>
       <p>See Sources below for what's read from firmware and what's matched.</p>
     </div>
@@ -680,7 +700,8 @@ function fitPattern(p){
 }
 let custom=emptyPattern();
 try{ const saved=fitPattern(JSON.parse(localStorage.getItem(STORE))); if(saved) custom=saved; }catch(e){}
-function saveCustom(){ try{ localStorage.setItem(STORE,JSON.stringify(custom)); }catch(e){} }
+function saveCustom(){ try{ localStorage.setItem(STORE,JSON.stringify(custom));
+  localStorage.setItem(STORE+":ext",JSON.stringify(Object.fromEntries(LANES.filter(L=>hasExt(custom[L.key])).map(L=>[L.key,extJSON(custom[L.key])])))); }catch(e){} }
 // data holds the full tracks. pattern is a 16-step window onto them for one bar (barCtx): Kick and Snare show
 // that bar's 16 steps, the 1-bar tracks always show their one bar. Everything that reads pattern[lane][k]
 // (grid, Linear, Feels, Rolls, playback) works on whichever bar barCtx points at.
@@ -698,6 +719,35 @@ function windowOf(a){
 }
 function bindPattern(){ pattern={}; for(const L of LANES) pattern[L.key]=windowOf(data[L.key]); }
 function atBar(b,fn){ const was=barCtx; barCtx=b; try{ return fn(); } finally{ barCtx=was; } }
+// ---------- step ratchets and pitch: experimental, a model of a proposed firmware mod ----------
+// Each track array can carry a hidden .x = {r, p}: per step, a ratchet count (1 to 4 hits inside the step) and a pitch
+// in semitones (-24 to +24). It rides along with the array (your beat, a preset, a bank pattern), so the PatternBank
+// file itself never changes. Banks keep it in a side file, PatternExtNNN.txt.
+const RMAX=4, PMAX=24;
+function extOf(a){
+  if(!a.x){ const v={r:Array(a.length).fill(1),p:Array(a.length).fill(0)};
+    if("x" in a) a.x=v; else Object.defineProperty(a,"x",{value:v,writable:true,configurable:true,enumerable:false}); }
+  return a.x;
+}
+const extIdx=(a,k)=>(a.length>16?barCtx*16:0)+k;
+const ratchetAt=(lane,k)=>{ const a=data[lane]; return a.x?a.x.r[extIdx(a,k)]:1; };
+const pitchAt=(lane,k)=>{ const a=data[lane]; return a.x?a.x.p[extIdx(a,k)]:0; };
+function setExtAt(lane,k,key,v){ const a=data[lane]; extOf(a)[key][extIdx(a,k)]=v; }
+function clearExtAt(lane,k){ const a=data[lane]; if(a.x){ const i=extIdx(a,k); a.x.r[i]=1; a.x.p[i]=0; } }
+const hasExt=a=>!!a&&!!a.x&&(a.x.r.some(v=>v!==1)||a.x.p.some(v=>v!==0));
+const extJSON=a=>hasExt(a)?{r:a.x.r.slice(),p:a.x.p.slice()}:null;
+const okR=v=>Number.isInteger(v)&&v>=1&&v<=RMAX, okP=v=>Number.isInteger(v)&&Math.abs(v)<=PMAX;
+function setExtJSON(a,o){
+  if(o&&Array.isArray(o.r)&&Array.isArray(o.p)&&o.r.length===a.length&&o.p.length===a.length&&o.r.every(okR)&&o.p.every(okP)){
+    const x=extOf(a); x.r=o.r.slice(); x.p=o.p.slice(); }
+  else if(a.x) a.x=null;
+}
+const copyExt=(from,to)=>setExtJSON(to,extJSON(from));
+// Hit times inside a step of len ticks: r hits on whole ticks, like the module would fire them.
+function subTicks(len,r){ const out=[]; for(let j=1;j<r;j++){ const d=Math.floor(j*len/r); if(d>0&&!out.includes(d)) out.push(d); } return out; }
+const accentOf=k=>k%4===0?1:(k%2===0?0.8:0.6);
+// your beat's ratchets and pitch, saved next to it
+try{ const x=JSON.parse(localStorage.getItem(STORE+":ext"))||{}; for(const L of LANES) setExtJSON(custom[L.key],x[L.key]); }catch(e){}
 // MODSRC: MODULE mode. The grid's tracks are the bank's own pattern arrays (see Pattern banks), so edits go
 // straight into the bank, like Pattern Edit on the module.
 const MODSRC=CUSTOM+1;
@@ -772,7 +822,7 @@ const fmtMs=ms=>Math.abs(ms)<0.05?"0 ms":(ms>0?"+":"−")+Math.abs(ms).toFixed(1
 const bar=document.getElementById("bar"), X0=122, X1=984, BX=f=>X0+(X1-X0)*f;
 const laneY={}, BOT=260; LANES.forEach((L,i)=>laneY[L.key]=86+i*32); // tight lanes so the whole grid fits on screen
 const gSlots=el("g",{},bar), hits={};
-let hoverRing, gRoll;
+let hoverRing, gRoll, gExt;
 (function buildBar(){
   for(let b=0;b<=4;b++){
     el("line",{x1:BX(b/4),x2:BX(b/4),y1:24,y2:BOT,stroke:css("beat"),"stroke-width":b%4?1:1.6},bar);
@@ -806,6 +856,7 @@ let hoverRing, gRoll;
       hits[L.key].push(g);
     }
   }
+  gExt=el("g",{"pointer-events":"none"},bar);
   gRoll=el("g",{"pointer-events":"none"},bar);
   hoverRing=el("circle",{r:14,fill:"none",stroke:css("accent"),"stroke-width":2,"stroke-dasharray":"3 3",visibility:"hidden","pointer-events":"none"},bar);
   bar.playhead=el("line",{x1:-9,x2:-9,y1:24,y2:BOT,stroke:css("accent"),"stroke-width":2,visibility:"hidden","pointer-events":"none"},bar);
@@ -845,6 +896,27 @@ function drawRolls(){
       el("line",{x1:x,x2:x,y1:y-7,y2:y+7,stroke:css("text"),"stroke-width":2,"stroke-linecap":"round",opacity:muted[lane]?.2:.6},gRoll);
     } }
 }
+// Step ratchets as short marks where each extra hit lands, the count under the dot, and pitch above it.
+const rollsOn=()=>!state.straight&&feelKey()==="Rolls";
+const stepBase=()=>{ const N=curRes(); return state.straight?ALL.map(k=>k*N/4):lanePositions(state.timing,state.shuffle); };
+const stepLen=(base,k)=>(k<15?base[k+1]:4*curRes())-base[k];
+const ratchetsLive=lane=>!(lane==="H2"&&rollsOn()); // Rolls already retrigger Hihat 2
+function drawExt(){
+  gExt.innerHTML="";
+  const N=curRes(), base=stepBase();
+  for(const L of LANES){ const y=laneY[L.key], op=muted[L.key]?.3:1;
+    for(let k=0;k<16;k++){
+      if(!pattern[L.key][k]) continue;
+      const x=BX(shown[L.key][k]), r=ratchetAt(L.key,k), p=pitchAt(L.key,k);
+      if(r>1){
+        const live=ratchetsLive(L.key);
+        if(!animating&&live) for(const d of subTicks(stepLen(base,k),r)){ const sx=BX((target[L.key][k]*4*N+d)/(4*N));
+          el("line",{x1:sx,x2:sx,y1:y-6,y2:y+6,stroke:css("ext"),"stroke-width":2.2,"stroke-linecap":"round",opacity:op},gExt); }
+        const t=el("text",{x:x+L.r+1,y:y+L.r+7,fill:css("ext"),"font-size":9.5,"font-weight":700,opacity:live?op:.35},gExt); t.textContent="×"+r;
+      }
+      if(p){ const t=el("text",{x:x+L.r+1,y:y-L.r+1,fill:css("ext"),"font-size":9.5,"font-weight":700,opacity:op},gExt); t.textContent=(p>0?"+":"−")+Math.abs(p); }
+    } }
+}
 function colorFor(d){ return Math.abs(d)<1e-6?css("on"):(d>0?css("late"):css("early")); }
 function drawBar(){
   replanDue=true;
@@ -870,7 +942,7 @@ function drawBar(){
     g.link.setAttribute("x1",BX(k/16)); g.link.setAttribute("x2",BX(f)); g.link.setAttribute("stroke",c);
     g.link.setAttribute("visibility",on&&moved?"visible":"hidden");
   }
-  drawRolls();
+  drawRolls(); drawExt();
   if(hoverCell) placeHover(hoverCell);
   drawBarTabs();
 }
@@ -909,18 +981,60 @@ function placeHover(c){ hoverRing.setAttribute("cx",BX(shown[c.lane][c.k])); hov
 function setHover(c){ hoverCell=c; if(c) placeHover(c); else hoverRing.setAttribute("visibility","hidden"); }
 function paint(c){
   if(pattern[c.lane][c.k]===paintValue) return;
-  pattern[c.lane][c.k]=paintValue;
+  pattern[c.lane][c.k]=paintValue; clearExtAt(c.lane,c.k); // a new or erased hit starts plain
   if(beatIdx!==CUSTOM) edited=true;
   drawBar();
   if(paintValue&&!muted[c.lane]){ ensureAudio(); voice(c.lane,ctx.currentTime+0.005,c.k); }
 }
+// Draw tool: HITS places and erases. RATCHET: click a hit to step 1, 2, 3, 4 hits per step (Shift-click steps back),
+// or scroll over it, like turning Shuffle in Pattern Edit. PITCH: drag a hit up or down, scroll for a semitone,
+// Shift-scroll for an octave, double-click to reset, like holding Tap and turning the track's encoder.
+let tool="hits", pitchDrag=null;
+const TOOL_NOTES={
+  hits:"Click or drag to place hits. Start on a hit to erase.",
+  ratchet:"Click a hit to step its ratchet: 1, 2 (32nds), 3, 4, then back to 1. Shift-click steps back, or scroll over the hit. On the module this would be Pattern Edit: turn Shuffle 0 to 3 on the step under the cursor.",
+  pitch:"Drag a hit up or down to tune it, up to 2 octaves each way. Scroll for a semitone, Shift-scroll for an octave, double-click to reset. On the module this would be: hold Tap and turn the track's encoder. Pitch changes the MIDI note; the trigger outs don't change."
+};
+function setTool(t){
+  tool=t; pitchDrag=null; paintValue=null;
+  document.querySelectorAll("#toolSeg button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.tool===t)));
+  bar.classList.toggle("tool-ratchet",t==="ratchet"); bar.classList.toggle("tool-pitch",t==="pitch");
+  document.getElementById("toolNote").textContent=TOOL_NOTES[t];
+}
+document.querySelectorAll("#toolSeg button").forEach(b=>b.addEventListener("click",()=>setTool(b.dataset.tool)));
+setTool("hits");
+function extSaved(){ if(beatIdx===CUSTOM) saveCustom(); else if(beatIdx===MODSRC) bankEdited(); else edited=true; drawBeats(); }
+function auditionStep(c){ // hear the step as it now plays: its ratchet and pitch
+  if(muted[c.lane]) return; ensureAudio();
+  const N=curRes(), spb=60/state.bpm, base=stepBase(), t0=ctx.currentTime+0.005, semi=pitchAt(c.lane,c.k);
+  voice(c.lane,t0,c.k,false,undefined,semi);
+  if(ratchetsLive(c.lane)) for(const d of subTicks(stepLen(base,c.k),ratchetAt(c.lane,c.k))) voice(c.lane,t0+d/N*spb,c.k,false,accentOf(c.k)*0.75,semi);
+}
+function stepRatchet(c,d){ const r=ratchetAt(c.lane,c.k), n=((r-1+d)%RMAX+RMAX)%RMAX+1; setExtAt(c.lane,c.k,"r",n); drawBar(); auditionStep(c); extSaved(); }
+function setPitch(c,v){ v=Math.max(-PMAX,Math.min(PMAX,v)); if(v===pitchAt(c.lane,c.k)) return false; setExtAt(c.lane,c.k,"p",v); drawBar(); auditionStep(c); return true; }
 bar.addEventListener("pointerdown",e=>{
   const c=cellAt(e); if(!c) return;
   e.preventDefault(); try{ bar.setPointerCapture(e.pointerId); }catch(err){}
-  paintValue=pattern[c.lane][c.k]?0:1; paint(c); setHover(c);
+  setHover(c);
+  if(tool==="hits"){ paintValue=pattern[c.lane][c.k]?0:1; paint(c); return; }
+  if(!pattern[c.lane][c.k]) return; // ratchet and pitch only work on hits
+  if(tool==="ratchet") stepRatchet(c,e.shiftKey?-1:1);
+  else { pitchDrag={c,y0:svgPoint(e).y,p0:pitchAt(c.lane,c.k),moved:false}; auditionStep(c); }
 });
-bar.addEventListener("pointermove",e=>{ const c=cellAt(e); setHover(c); if(paintValue!==null&&c) paint(c); });
-function endPaint(){ if(paintValue===null) return; paintValue=null; if(beatIdx===CUSTOM) saveCustom(); else if(beatIdx===MODSRC) bankEdited(); drawBeats(); }
+bar.addEventListener("pointermove",e=>{
+  if(pitchDrag){ const v=pitchDrag.p0+Math.round((pitchDrag.y0-svgPoint(e).y)/5); if(setPitch(pitchDrag.c,v)) pitchDrag.moved=true; return; }
+  const c=cellAt(e); setHover(c); if(paintValue!==null&&c) paint(c);
+});
+bar.addEventListener("wheel",e=>{
+  if(tool==="hits") return; const c=cellAt(e); if(!c||!pattern[c.lane][c.k]) return;
+  e.preventDefault(); const d=e.deltaY<0?1:-1;
+  if(tool==="ratchet"){ const r=Math.max(1,Math.min(RMAX,ratchetAt(c.lane,c.k)+d)); if(r!==ratchetAt(c.lane,c.k)){ setExtAt(c.lane,c.k,"r",r); drawBar(); auditionStep(c); extSaved(); } }
+  else if(setPitch(c,pitchAt(c.lane,c.k)+d*(e.shiftKey?12:1))) extSaved();
+},{passive:false});
+bar.addEventListener("dblclick",e=>{ if(tool!=="pitch") return; const c=cellAt(e); if(c&&pattern[c.lane][c.k]&&setPitch(c,0)) extSaved(); });
+function endPaint(){
+  if(pitchDrag){ const d=pitchDrag; pitchDrag=null; if(d.moved) extSaved(); return; }
+  if(paintValue===null) return; paintValue=null; if(beatIdx===CUSTOM) saveCustom(); else if(beatIdx===MODSRC) bankEdited(); drawBeats(); }
 bar.addEventListener("pointerup",endPaint);
 bar.addEventListener("pointercancel",endPaint);
 bar.addEventListener("pointerleave",()=>{ if(paintValue===null) setHover(null); });
@@ -1101,7 +1215,7 @@ const bWrap=document.getElementById("beats"), mineBtn=document.getElementById("m
 BEATS.forEach((b,i)=>{ const btn=document.createElement("button"); btn.className="bbtn"; btn.innerHTML=`<span class="n">${i+1}</span>${b.name}`;
   btn.addEventListener("click",()=>{ loadBeat(i); drawBeats(); drawBar(); drawBanks(); }); bWrap.appendChild(btn); });
 mineBtn.addEventListener("click",()=>{ loadBeat(CUSTOM); drawBeats(); drawBar(); drawBanks(); });
-clearBtn.addEventListener("click",()=>{ for(const L of LANES) custom[L.key].fill(0); saveCustom(); loadBeat(CUSTOM); drawBeats(); drawBar(); drawBanks(); });
+clearBtn.addEventListener("click",()=>{ for(const L of LANES){ custom[L.key].fill(0); setExtJSON(custom[L.key],null); } saveCustom(); loadBeat(CUSTOM); drawBeats(); drawBar(); drawBanks(); });
 function drawBeats(){
   bWrap.querySelectorAll(".bbtn").forEach((b,i)=>b.setAttribute("aria-pressed",String(i===beatIdx)));
   mineBtn.setAttribute("aria-pressed",String(beatIdx===CUSTOM));
@@ -1141,7 +1255,8 @@ function setViewBar(b){
   target=computeTargets(); shown=cloneT(target); drawBar(); // Slop's hats and Linear depend on this bar's Kick and Snare
 }
 document.getElementById("copyBar").addEventListener("click",()=>{
-  for(const l of LONG){ const src=data[l].slice(viewBar*16,viewBar*16+16); for(let b=0;b<BARS;b++) if(b!==viewBar) src.forEach((v,k)=>data[l][b*16+k]=v); }
+  for(const l of LONG){ const a=data[l], src=a.slice(viewBar*16,viewBar*16+16); for(let b=0;b<BARS;b++) if(b!==viewBar) src.forEach((v,k)=>a[b*16+k]=v);
+    if(a.x) for(const key of ["r","p"]){ const xs=a.x[key].slice(viewBar*16,viewBar*16+16); for(let b=0;b<BARS;b++) if(b!==viewBar) xs.forEach((v,k)=>a.x[key][b*16+k]=v); } }
   if(beatIdx===CUSTOM) saveCustom(); else if(beatIdx===MODSRC) bankEdited(); else edited=true;
   drawBeats(); drawBar();
 });
@@ -1161,6 +1276,38 @@ function writeBank(bank){
     const bars=[]; for(let i=0;i<a.length;i+=16) bars.push(a.slice(i,i+16).join(""));
     return `${FILE_NAME[L.key]} > PTN${p}: ${bars.join(", ")};`;
   }).join("\r\n")).join("\r\n\r\n")+"\r\n";
+}
+// Ratchets and pitch for a bank, in a side file next to it (experimental: for a proposed firmware mod, the module
+// doesn't read it today). Same group and PTN names. Only patterns that use them get lines:
+//   KICK > PTN3 RATCHET: 1111211111111111, 1111111111111111, 1111111111111111, 1111111111111111;
+//   KICK > PTN3 PITCH: 0 0 +12 0 0 0 0 0 0 0 0 0 -5 0 0 0, ...;
+const extFile=n=>`PatternExt${pad3(n)}.txt`, EXT_HEAD="STOLPERBEATS PATTERN EXT 1";
+const sgn=v=>v>0?"+"+v:String(v);
+function writeExt(bank){
+  const lines=[];
+  for(const L of LANES) bank[L.key].forEach((a,p)=>{ if(!hasExt(a)) return; const blocks=f=>{ const out=[]; for(let i=0;i<a.length;i+=16) out.push(f(i)); return out.join(", "); };
+    if(a.x.r.some(v=>v!==1)) lines.push(`${FILE_NAME[L.key]} > PTN${p} RATCHET: ${blocks(i=>a.x.r.slice(i,i+16).join(""))};`);
+    if(a.x.p.some(v=>v!==0)) lines.push(`${FILE_NAME[L.key]} > PTN${p} PITCH: ${blocks(i=>a.x.p.slice(i,i+16).map(sgn).join(" "))};`); });
+  return lines.length?[EXT_HEAD,...lines].join("\r\n")+"\r\n":"";
+}
+function parseExt(text){
+  const keyOf=Object.fromEntries(Object.entries(FILE_NAME).map(([k,v])=>[v,k])), out=[], problems=[];
+  text.split(/\r?\n/).forEach((raw,i)=>{
+    const line=raw.trim(); if(!line||line===EXT_HEAD) return;
+    const m=line.match(/^([A-Z0-9]+)\s*>\s*PTN(\d+)\s+(RATCHET|PITCH)\s*:\s*(.*?)\s*;?$/i), key=m&&keyOf[m[1].toUpperCase()];
+    if(!key||+m[2]>=PTNS){ problems.push(`line ${i+1} isn't an ext line`); return; }
+    const kind=m[3].toUpperCase(), blocks=m[4].split(",").map(b=>b.trim()), want=laneLen(key)/16;
+    const vals=kind==="RATCHET"?blocks.flatMap(b=>b.split("").map(Number)):blocks.flatMap(b=>b.split(/\s+/).map(Number));
+    if(blocks.length!==want||vals.length!==laneLen(key)||!vals.every(kind==="RATCHET"?okR:okP)){ problems.push(`line ${i+1}: ${FILE_NAME[key]} PTN${m[2]} ${kind} doesn't fit`); return; }
+    out.push({lane:key,p:+m[2],kind,vals});
+  });
+  return {lines:out,problems};
+}
+function applyExt(bank,text){ // replaces the bank's ratchets and pitch with the file's
+  const {lines,problems}=parseExt(text);
+  for(const L of LANES) bank[L.key].forEach(a=>setExtJSON(a,null));
+  for(const x of lines) extOf(bank[x.lane][x.p])[x.kind==="RATCHET"?"r":"p"]=x.vals.slice();
+  return problems;
 }
 function parseBank(text){
   const bank=emptyBank(), got=new Set(), problems=[];
@@ -1190,14 +1337,15 @@ const groupOf=Object.fromEntries(GROUPS.flatMap(G=>G.lanes.map(l=>[l,G.g])));
 let banks=new Map(), selBank=null, modSel={K:0,S:0,H1:0,H2:0,P1:0,P2:0}, srcMode="sketch", sketch=null, undoSend=null;
 const trackPick=Object.fromEntries(LANES.map(L=>[L.key,true]));
 try{ const s=JSON.parse(localStorage.getItem(BANK_STORE))||{};
-  for(const [n,txt] of Object.entries(s.banks||{})){ const k=+n; if(Number.isInteger(k)&&k>=0&&k<MAX_BANKS) try{ banks.set(k,parseBank(txt).bank); }catch(e){} }
+  for(const [n,txt] of Object.entries(s.banks||{})){ const k=+n; if(Number.isInteger(k)&&k>=0&&k<MAX_BANKS) try{ const b=parseBank(txt).bank; if(s.ext&&s.ext[n]) applyExt(b,s.ext[n]); banks.set(k,b); }catch(e){} }
   selBank=banks.has(s.sel)?s.sel:banks.size?Math.min(...banks.keys()):null;
   if(s.ptn){ const old={H1:"H",H2:"H",P1:"P",P2:"P"}; // saves from when Hihat 1+2 and Perc 1+2 shared a number
     for(const G of GROUPS){ const v=s.ptn[G.g]??s.ptn[old[G.g]]; if(Number.isInteger(v)&&v>=0&&v<PTNS) modSel[G.g]=v; } }
   if(s.src==="module"&&selBank!==null) srcMode="module";
 }catch(e){}
 function saveBanks(){
-  try{ localStorage.setItem(BANK_STORE,JSON.stringify({sel:selBank,ptn:modSel,src:srcMode,banks:Object.fromEntries([...banks].map(([n,b])=>[n,writeBank(b)]))})); return true; }
+  try{ localStorage.setItem(BANK_STORE,JSON.stringify({sel:selBank,ptn:modSel,src:srcMode,banks:Object.fromEntries([...banks].map(([n,b])=>[n,writeBank(b)])),
+    ext:Object.fromEntries([...banks].map(([n,b])=>[n,writeExt(b)]).filter(([,t])=>t))})); return true; }
   catch(e){ bankMsg("Couldn't save banks in this browser (storage full?). Download them to keep them.",true); return false; }
 }
 const bankMsgEl=document.getElementById("bankMsg");
@@ -1363,22 +1511,24 @@ LANES.forEach(L=>{ const b=document.createElement("button"); b.type="button"; b.
 document.getElementById("sendSketch").addEventListener("click",()=>{
   if(selBank===null||srcMode==="module") return;
   const b=banks.get(selBank), ks=picked();
-  undoSend={bank:selBank,lanes:Object.fromEntries(ks.map(k=>[k,{p:modSel[groupOf[k]],was:b[k][modSel[groupOf[k]]].slice()}]))};
-  for(const k of ks){ const a=b[k][modSel[groupOf[k]]]; a.splice(0,a.length,...data[k]); }
+  undoSend={bank:selBank,lanes:Object.fromEntries(ks.map(k=>{ const a=b[k][modSel[groupOf[k]]]; return [k,{p:modSel[groupOf[k]],was:a.slice(),wasX:extJSON(a)}]; }))};
+  for(const k of ks){ const a=b[k][modSel[groupOf[k]]]; a.splice(0,a.length,...data[k]); copyExt(data[k],a); }
   saveBanks(); drawBanks();
   bankMsg(`Sent ${ks.length===LANES.length?"the sketch":andList(ks.map(laneName))} to Bank ${selBank+1}: ${[...new Set(ks.map(k=>groupOf[k]))].map(g=>{ const G=GROUPS.find(x=>x.g===g); return `${G.name} ${modSel[g]+1}`; }).join(", ")}. Download the bank to put it on the card.`);
 });
 document.getElementById("sendUndo").addEventListener("click",()=>{
   if(!undoSend||!banks.has(undoSend.bank)) return;
-  const b=banks.get(undoSend.bank); for(const k in undoSend.lanes){ const {p,was}=undoSend.lanes[k], a=b[k][p]; a.splice(0,a.length,...was); }
+  const b=banks.get(undoSend.bank); for(const k in undoSend.lanes){ const {p,was,wasX}=undoSend.lanes[k], a=b[k][p]; a.splice(0,a.length,...was); setExtJSON(a,wasX); }
   undoSend=null; saveBanks(); drawBanks(); if(srcMode==="module") refreshGrid(); bankMsg("Send undone.");
 });
 const bankFileIn=document.getElementById("bankFile");
 document.getElementById("bankImport").addEventListener("click",()=>bankFileIn.click());
 bankFileIn.addEventListener("change",async()=>{
   const files=[...bankFileIn.files]; bankFileIn.value="";
-  const done=[], bad=[];
+  const done=[], bad=[], exts=[];
   for(const f of files){
+    const xm=f.name.match(/PatternExt(\d{1,3})/i);
+    if(xm){ exts.push({f,n:+xm[1]}); continue; } // ratchet and pitch side files: applied once the banks are in
     try{
       const {bank,problems}=parseBank(await f.text()), m=f.name.match(/PatternBank(\d{1,3})/i);
       let n=m?+m[1]:firstFree();
@@ -1386,6 +1536,11 @@ bankFileIn.addEventListener("change",async()=>{
       banks.set(n,bank); if(selBank===null) selBank=n; done.push(`Bank ${n+1}`);
       if(problems.length) bad.push(`${f.name}: ${problems.slice(0,3).join("; ")}${problems.length>3?` and ${problems.length-3} more`:""}`);
     }catch(e){ bad.push(`${f.name}: not a PatternBank file (${e.message})`); }
+  }
+  for(const {f,n} of exts){
+    if(!banks.has(n)){ bad.push(`${f.name}: import ${bankFile(n)} first`); continue; }
+    const problems=applyExt(banks.get(n),await f.text()); done.push(`ratchets and pitch for Bank ${n+1}`);
+    if(problems.length) bad.push(`${f.name}: ${problems.slice(0,3).join("; ")}${problems.length>3?` and ${problems.length-3} more`:""}`);
   }
   undoSend=null; syncModule(); // an import can replace the bank MODULE is playing
   bankMsg([done.length?`Imported ${andList(done)}.`:"",...bad].filter(Boolean).join(" "),bad.length>0);
@@ -1398,11 +1553,13 @@ document.getElementById("bankNew").addEventListener("click",()=>{
 });
 document.getElementById("bankDl").addEventListener("click",()=>{
   if(selBank===null) return;
-  download(bankFile(selBank),new Blob([writeBank(banks.get(selBank))],{type:"text/plain"}));
+  const b=banks.get(selBank), x=writeExt(b);
+  if(!x) download(bankFile(selBank),new Blob([writeBank(b)],{type:"text/plain"}));
+  else download(`stolperbeats-bank-${selBank+1}.zip`,zip([[bankFile(selBank),writeBank(b)],[extFile(selBank),x]])); // with its ratchets and pitch
 });
 document.getElementById("bankZip").addEventListener("click",()=>{
   if(!banks.size) return;
-  download("stolperbeats-pattern-banks.zip",zip(sortedBanks().map(n=>[bankFile(n),writeBank(banks.get(n))])));
+  download("stolperbeats-pattern-banks.zip",zip(sortedBanks().flatMap(n=>{ const b=banks.get(n), x=writeExt(b); return x?[[bankFile(n),writeBank(b)],[extFile(n),x]]:[[bankFile(n),writeBank(b)]]; })));
 });
 // Opened in MODULE mode last time: start there. Drawing waits for the page's first full draw below.
 if(srcMode==="module"){ sketch=null; beatIdx=MODSRC; bindModule(); target=computeTargets(); shown=cloneT(target); }
@@ -1420,22 +1577,24 @@ function ensureAudio(){
   }
   if(ctx.state!=="running") ctx.resume();
 }
+let PM=1; // pitch of the hit being voiced: 2^(semitones/12)
+const pf=f=>Math.min(f*PM,ctx.sampleRate*0.45);
 function env(g,t,peak,dur){ g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(peak,t+0.002); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); }
 function osc(t,type,f0,f1,glide,dur,peak){
   const o=ctx.createOscillator(), g=ctx.createGain(); o.type=type;
-  o.frequency.setValueAtTime(f0,t); if(f1) o.frequency.exponentialRampToValueAtTime(f1,t+glide);
+  o.frequency.setValueAtTime(pf(f0),t); if(f1) o.frequency.exponentialRampToValueAtTime(pf(f1),t+glide);
   env(g,t,peak,dur); o.connect(g).connect(OUT); o.start(t); o.stop(t+dur+0.05); return g;
 }
 function noise(t,dur,peak,filters){
   const s=ctx.createBufferSource(); s.buffer=noiseBuf; let node=s;
-  for(const [type,f,q] of filters){ const b=ctx.createBiquadFilter(); b.type=type; b.frequency.value=f; if(q) b.Q.value=q; node.connect(b); node=b; }
+  for(const [type,f,q] of filters){ const b=ctx.createBiquadFilter(); b.type=type; b.frequency.value=pf(f); if(q) b.Q.value=q; node.connect(b); node=b; }
   const g=ctx.createGain(); env(g,t,peak,dur); node.connect(g).connect(OUT); s.start(t); s.stop(t+dur+0.05); return g;
 }
 function metal(t,dur,peak,hp){ // 808-style metallic hat: six detuned square waves
   const g=ctx.createGain(), bp=ctx.createBiquadFilter(), h=ctx.createBiquadFilter();
-  bp.type="bandpass"; bp.frequency.value=10000; bp.Q.value=0.7; h.type="highpass"; h.frequency.value=hp;
+  bp.type="bandpass"; bp.frequency.value=pf(10000); bp.Q.value=0.7; h.type="highpass"; h.frequency.value=pf(hp);
   env(g,t,peak,dur); bp.connect(h).connect(g).connect(OUT);
-  for(const f of [205.3,304.4,369.6,522.7,540,800]){ const o=ctx.createOscillator(); o.type="square"; o.frequency.value=f; o.connect(bp); o.start(t); o.stop(t+dur+0.05); }
+  for(const f of [205.3,304.4,369.6,522.7,540,800]){ const o=ctx.createOscillator(); o.type="square"; o.frequency.value=pf(f); o.connect(bp); o.start(t); o.stop(t+dur+0.05); }
   return g;
 }
 function clap(t,f,tail,peak){ for(const d of [0,0.011,0.022]) noise(t+d,0.014,peak,[["bandpass",f,1.3]]); return noise(t+0.032,tail,peak*0.75,[["bandpass",f,1.1]]); }
@@ -1466,20 +1625,31 @@ const VOICES={
     P2:t=>osc(t,"sine",185,135,0.18,0.3,0.6)
   }
 };
-function voice(lane,t,k,roll,lvl){
+function voice(lane,t,k,roll,lvl,semi){
+  PM=2**((semi||0)/12);
+  try{ voice0(lane,t,k,roll,lvl); } finally{ PM=1; }
+}
+function voice0(lane,t,k,roll,lvl){
   if((lane==="H1"||lane==="H2")&&openHat&&openHat.end>t){ // a new hat hit chokes the ringing open hat
     for(const g of openHat.gs){ g.gain.cancelScheduledValues(t); g.gain.setTargetAtTime(0.0001,t,0.008); }
     openHat=null;
   }
   if(lane==="H2"){ const dur=roll?0.07:0.45; openHat={gs:[].concat(VOICES[state.kit].H2(t,roll?0.75:1,dur)).filter(Boolean),end:t+dur}; return; }
-  VOICES[state.kit][lane](t,lvl??(k%4===0?1:(k%2===0?0.8:0.6)));
+  VOICES[state.kit][lane](t,lvl??accentOf(k));
 }
 // One bar's events (b = 0 to 3). Kick and Snare come from that bar; the 1-bar tracks are the same every bar.
 function barEvents(b=viewBar){ return atBar(b,()=>{
   const N=curRes(), spb=60/state.bpm;
   const list=[];
   // id names each hit by its step, not its time, so a replan knows which hits of this bar have already fired
-  for(const L of LANES){ const ticks=laneTicks(L.key); for(let k=0;k<16;k++) if(pattern[L.key][k]&&!linearMuted(L.key,k)) list.push({t:ticks[k]/N*spb,lane:L.key,k,id:L.key+k}); }
+  const base=stepBase();
+  for(const L of LANES){ const ticks=laneTicks(L.key), live=ratchetsLive(L.key);
+    for(let k=0;k<16;k++) if(pattern[L.key][k]&&!linearMuted(L.key,k)){
+      const semi=pitchAt(L.key,k), r=live?ratchetAt(L.key,k):1;
+      list.push({t:ticks[k]/N*spb,lane:L.key,k,id:L.key+k,semi});
+      // step ratchets: extra hits on whole ticks inside the step (experimental)
+      subTicks(stepLen(base,k),r).forEach((d,j)=>list.push({t:(ticks[k]+d)/N*spb,lane:L.key,k,id:`${L.key}${k}x${j+1}`,semi,lvl:accentOf(k)*0.75,sub:true}));
+    } }
   const sub={}; // ratchets: the j-th retrigger after step k
   for(const r of rollTicks()){ const j=sub["r"+r.k]=(sub["r"+r.k]||0)+1; list.push({t:r.t/N*spb,lane:"H2",k:r.k,roll:true,id:`r${r.k}.${j}`}); }
   list.sort((a,b)=>a.t-b.t); return {list,dur:4*spb,bar:b};
@@ -1514,7 +1684,7 @@ function schedule(){
     const B=bars[bars.length-1], e=cur.list[evI], t=B.start+e.t;
     if(t>horizon) break;
     // A hit a replan moved behind the clock fires now, like the module's step compare catching up: never twice, never lost
-    if(!muted[e.lane]) voice(e.lane,Math.max(t,ctx.currentTime+0.003),e.k,e.roll,e.lvl);
+    if(!muted[e.lane]) voice(e.lane,Math.max(t,ctx.currentTime+0.003),e.k,e.roll,e.lvl,e.semi);
     B.fired.add(e.id); B.maxK=Math.max(B.maxK,e.k); evI++;
   }
   schedTo=Math.max(schedTo,horizon);
@@ -1562,14 +1732,14 @@ const GM={BD:36,SD:38,H1:42,H2:46,P1:39,P2:63};
 // ---------- Download MIDI: the 4-bar pattern, exactly as it plays ----------
 // Four bars of 4/4 at the current tempo, GM drums on channel 10, 960 ticks per quarter (hits round to the nearest 1/960
 // of a beat, under 0.4 ms at 90 bpm). Same events the player schedules: every hit at its played tick (Timing, Shuffle,
-// Feel, Hear straight), Rolls ratchets, accents as velocity. Muted tracks and Linear-silenced hits are left out.
+// Feel, Hear straight), Rolls ratchets, step ratchets and pitch, accents as velocity. Muted tracks and Linear-silenced hits are left out.
 function gridMidi(){
   // All 4 bars: Kick and Snare as written in each bar, the 1-bar tracks repeated under them.
   const PPQ=960, BAR1=4*PPQ, BAR=BARS*BAR1, spb=60/state.bpm;
   const ev=[...Array(BARS).keys()].flatMap(b=>barEvents(b).list.filter(e=>!muted[e.lane]).map(e=>({
     // a hit dragged past a bar line (Flam late in the bar at fast tempos) lands in the next bar, and past bar 4 wraps to the top
-    at:((b*BAR1+Math.round(e.t/spb*PPQ))%BAR+BAR)%BAR, note:GM[e.lane],
-    vel:Math.max(1,Math.min(127,Math.round(115*(e.roll?0.75:e.lvl??(e.k%4===0?1:e.k%2===0?0.8:0.6)))))})));
+    at:((b*BAR1+Math.round(e.t/spb*PPQ))%BAR+BAR)%BAR, note:Math.max(0,Math.min(127,GM[e.lane]+(e.semi||0))),
+    vel:Math.max(1,Math.min(127,Math.round(115*(e.roll?0.75:e.lvl??accentOf(e.k)))))})));
   const msgs=[];
   for(const e of ev){ // note length: up to a 32nd, ending before the same note plays again
     const next=ev.filter(x=>x.note===e.note&&x.at>e.at).reduce((m,x)=>Math.min(m,x.at),BAR);
