@@ -303,30 +303,12 @@ main{padding-top:14px}
 .sdhelp ol{margin:8px 0 6px 18px;padding:0}
 .sdhelp li{margin:3px 0}
 .sdhelp p{margin:4px 0 0}
-/* Firmware lab */
-#fwCard .fwbody{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
-#fwCard.dragging{outline:2px dashed var(--accent);outline-offset:4px}
-.fwwarn{font-size:13px;color:var(--muted);border-left:3px solid var(--orange);padding:2px 0 2px 10px}
-.fwsteps{margin:10px 0 0 18px;padding:0;display:flex;flex-direction:column;gap:14px;font-size:14px}
-.fwsteps a{color:inherit}
-.fwrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:8px}
-.fwdrop{font-size:12px;color:var(--muted)}
-.fwrow .dl{margin-left:0}
-.fwinfo{font-size:13px;color:var(--muted);margin-top:6px}
-.fwinfo:empty{display:none}
-.fwinfo b{color:var(--text)}
-.fwinfo .ok{color:var(--ok)} .fwinfo .bad{color:var(--orange)}
-.fwslots{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:8px}
-.fwslot{border:1px solid var(--line);border-radius:8px;padding:8px}
-.fwslot .lbl{font-size:11px;letter-spacing:.08em;font-weight:700;color:var(--muted)}
-.fwslot select{width:100%;margin-top:4px;font:inherit;font-size:13px;background:var(--chip);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:3px 4px}
-.fwslot .meta{font-size:11.5px;color:var(--muted);margin-top:5px;font-variant-numeric:tabular-nums}
-.fwslot .meta .bad{color:var(--orange)}
-.fwslot.changed{border-color:var(--green)}
-.fwslot .aud{margin-top:6px}
-.fwlog{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:12px;background:var(--chip);border:1px solid var(--line);border-radius:6px;padding:8px;white-space:pre-wrap;word-break:break-all;margin:6px 0 0;max-height:220px;overflow:auto}
-#fwProg{width:100%;margin-top:8px;height:10px}
-@media (max-width:760px){ .fwslots{grid-template-columns:repeat(2,minmax(0,1fr))} }
+/* Firmware lab: now a link to the ULTRA flasher */
+.fwlink{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.fwlink .fwtext{flex:1 1 320px;min-width:0;font-size:15px}
+.fwlink .sum-sub{color:var(--muted);font-size:13px}
+.fwlink .fwtext p{margin:4px 0 0;font-size:13px;color:var(--muted)}
+a.sbtn{text-decoration:none;display:inline-block}
 /* VISUALISER | CREATOR switch, and the timing creator, which takes the Timing row's place at the same size */
 .pagehead{grid-template-columns:1fr auto auto;grid-template-areas:"title mode theme" "lede lede lede"}
 .pagehead .modesw{grid-area:mode}
@@ -348,7 +330,6 @@ body:not(.creating) #creatorrow,body.creating #timingrow{display:none}
 .cacts{margin-left:auto;display:flex;align-items:center;gap:6px}
 .cacts .dl{margin-left:0}
 a.dl{text-decoration:none;display:inline-block}
-.fwultra{font-size:13px;border-left:3px solid var(--accent);padding:2px 0 2px 10px;margin:10px 0 0}
 .cname{width:70px;border:1px solid var(--line);background:var(--chip);color:var(--text);border-radius:6px;padding:1px 7px;font:600 12px/1.5 ui-monospace,"SF Mono",Menlo,monospace;letter-spacing:.1em;text-transform:uppercase}
 .cname:focus{outline:none;border-color:var(--mine)}
 .crow{display:flex;align-items:center;gap:8px;min-width:0;height:26px}
@@ -379,7 +360,7 @@ a.dl{text-decoration:none;display:inline-block}
 <main>
   <header class="pagehead">
     <h1>Stolperbeats visualiser</h1>
-    <p class="lede">A visualiser and emulator of the MSM Stolperbeats module. See and hear exactly where its Timings put each hit, program its pattern banks, and try alt timing tables on your own module with the Firmware lab. Unofficial, for educational purposes only.</p>
+    <p class="lede">A visualiser and emulator of the MSM Stolperbeats module. See and hear exactly where its Timings put each hit, program its pattern banks, and try alt timing tables on your own module with the <a href="https://thisisbribery.github.io/stolperbeats-ultra-v1/" target="_blank" rel="noopener" style="color:inherit">STOLPERBEATS ULTRA flasher</a>. Unofficial, for educational purposes only.</p>
     <div class="seg modesw" id="modeSw" role="group" aria-label="Page mode"><button data-mode="0" aria-pressed="true">VISUALISER</button><button data-mode="1" aria-pressed="false" title="Make your own Timing table">CREATOR</button></div>
     <button class="theme" id="theme" aria-label="Switch to light mode">
       <span id="themeLabel">Dark</span>
@@ -532,30 +513,11 @@ a.dl{text-decoration:none;display:inline-block}
     <table id="tbl"></table>
   </section>
 
-  <details class="card sources" id="fwCard">
-    <summary><span class="chev" aria-hidden="true"></span><span><b>Firmware lab</b> <span class="sum-sub">· build your own experimental firmware from the official file, and flash it</span></span></summary>
-    <div class="fwbody">
-      <p class="fwwarn"><b>Experimental, personal and educational use only.</b> This page never contains, stores or sends firmware. You bring the official file from Making Sound Machines, the page changes it in your browser, and hands it back. Not made, checked or supported by Making Sound Machines. You can always go back: flash the official file the same way.</p>
-      <p class="fwultra"><b>Want ratchets, pitch and fill mode too?</b> The <a href="https://thisisbribery.github.io/stolperbeats-ultra-v1/" target="_blank" rel="noopener">STOLPERBEATS ULTRA flasher</a> puts the same tables on the Timing buttons and adds ratchets, a MIDI note per step, fill mode and a fill CV gate, built from the same official file. Timings you save in the creator show up there, and recipes from this lab open there too.</p>
-      <ol class="fwsteps">
-        <li><b>Get the official firmware.</b> Download it from <a href="https://makingsoundmachines.com/firmware/" target="_blank" rel="noopener">makingsoundmachines.com/firmware</a>. It's named like <span class="mono">_MSM_stolperbeats_hw_rev4-163.bin</span>.
-          <div class="fwrow"><button class="sbtn" id="fwOpen" type="button">Open the .bin</button><span class="fwdrop">or drop it on this panel</span><input type="file" id="fwFile" accept=".bin,application/octet-stream" hidden></div>
-          <div class="fwinfo" id="fwInfo"></div></li>
-        <li><b>Pick your mods.</b> Choose what each Timing button plays. Factory keeps it as it is.
-          <div class="fwslots" id="fwSlots"></div>
-          <p class="hint" id="fwSlotNote"></p></li>
-        <li><b>Build.</b>
-          <div class="fwrow"><button class="sbtn save" id="fwBuild" type="button" disabled>Build firmware</button><button class="dl" id="fwRecipe" type="button" title="Save the mods you picked as a small .json file to share. It holds no firmware.">Save recipe</button><button class="dl" id="fwRecipeOpen" type="button" title="Load a recipe someone shared">Open recipe</button><input type="file" id="fwRecipeFile" accept=".json,application/json" hidden></div>
-          <div class="fwinfo" id="fwOut"></div></li>
-        <li><b>Flash.</b> Plug the module into your computer over USB. Hold <b>BOOT</b>, press and release <b>RESET</b>, then let go of BOOT. The module is now waiting for new firmware.
-          <div class="fwrow"><button class="sbtn" id="fwConnect" type="button">Connect</button><button class="sbtn save" id="fwFlash" type="button" disabled>Flash my build</button><button class="dl" id="fwRestore" type="button" disabled title="Put the official file you opened back on the module">Flash official file</button></div>
-          <progress id="fwProg" max="1" value="0" hidden></progress>
-          <div class="fwinfo" id="fwStatus"></div>
-          <details class="sdhelp"><summary>No Connect button, or rather use the command line</summary>
-            <p>Flashing from the page needs Chrome or Edge on a computer (WebUSB). Anywhere else, download your build and use <span class="mono">dfu-util</span>, the way the manual describes:</p>
-            <pre class="fwlog" id="fwCmd">sudo dfu-util -a 0 -s 0x08000000 -D your-build.bin</pre>
-            <p>Then press RESET to run it. On Windows, Chrome may need the WinUSB driver for the STM32 bootloader (Zadig can install it).</p>
-          </details></li>
+  <section class="card fwlink" id="fwCard">
+    <div class="fwtext"><b>Firmware lab</b> <span class="sum-sub">· now the STOLPERBEATS ULTRA flasher</span>
+      <p>Put the alt tables, or your own Timings from the creator, on the Timing buttons of your own official firmware, and add ratchets, a MIDI note per step, fill mode and a fill CV gate. It builds in your browser from the official file and flashes over USB. Timings saved here show up there under Yours, and old Firmware lab recipes open there too.</p></div>
+    <a class="sbtn save" href="https://thisisbribery.github.io/stolperbeats-ultra-v1/" target="_blank" rel="noopener">Open the ULTRA flasher ↗</a>
+  </section></li>
       </ol>
     </div>
   </details>
@@ -567,13 +529,13 @@ a.dl{text-decoration:none;display:inline-block}
       <p><b>Stolperbeats Timings.</b> Trip, Shake, Push and Clave, with all seven Shuffle settings, come from the step tables in firmware 163, and every hit is placed the same way the module places it. Like the module, a Shuffle or Timing change lands on the next beat; pattern, Feel and tempo changes land straight away.</p>
       <p><b>Feels.</b> Tight, Rolls, Flam and Slop, as on the module.</p>
       <p><b>Linear.</b> From the module: when tracks clash on a step, only the highest priority one plays.</p>
-      <p><b>Alt tables.</b> HOPP (MPC and Linn style 16th swing), DEEP (8ths and 16ths swinging at once), SQEZ (made in the creator: the "&amp;" and "a" squeeze toward the next beat), CLSTR (the "e", "&amp;" and "a" cluster on a tuplet grid, leaning late) and FOLD (every beat folds in toward the "&amp;"). Each is held in the module's own row format, whole ticks on 16 to 36 ticks per beat, so you can hear it here and then put it on a Timing button with the Firmware lab. DEEP, FOLD, CLSTR and SQEZ have run on a real module.</p>
+      <p><b>Alt tables.</b> HOPP (MPC and Linn style 16th swing), DEEP (8ths and 16ths swinging at once), SQEZ (made in the creator: the "&amp;" and "a" squeeze toward the next beat), CLSTR (the "e", "&amp;" and "a" cluster on a tuplet grid, leaning late) and FOLD (every beat folds in toward the "&amp;"). Each is held in the module's own row format, whole ticks on 16 to 36 ticks per beat, so you can hear it here and then put it on a Timing button with the ULTRA flasher. DEEP, FOLD, CLSTR and SQEZ have run on a real module.</p>
       <p><b>Download tables.</b> The button by the Timings saves the selected alt table as a zip: its Stolperbeats-format rows, the step positions at 96 ticks per beat, and a one-bar MIDI groove per level for Ableton (right-click a clip, Extract Groove(s)). It's off for the four factory Timings. No firmware is included.</p>
       <p><b>Four bars.</b> Like the module, Kick and Snare run 4 bars (64 steps) and the hats and percs loop 1 bar (16 steps) under them. The Bar tabs pick which bar the grid shows and edits; each tab has a mini map of its Kick (top) and Snare (bottom). Follow keeps the grid on the bar that's playing; pick a tab while playing to stay on that bar and edit it while the loop runs. In bars 2 to 4 the hats and percs are dimmed because they're bar 1 repeating. Copy to all copies the shown bar's Kick and Snare into the other three.</p>
       <p><b>SKETCH and MODULE.</b> The switch above the grid picks what it plays. SKETCH is the presets and your own beat. MODULE plays your pattern banks the way the module does: pick a Bank, then a pattern number for each of the six tracks. Edits go straight into the bank.</p>
       <p><b>Pattern banks.</b> Import the PatternBank files from your Stolperbeats SD card, browse each track's 24 patterns, edit them in MODULE mode or send a SKETCH beat into a bank, and download the bank to copy onto the card. Files come out in exactly the module's own format, byte for byte. No banks are included with this page: bring your own from your card.</p>
       <p><b>Ratchets and pitch (experimental).</b> Not on the module today: this models a proposed firmware mod so you can hear it first. The Draw switch above the grid picks what a click edits. RATCHET gives a step 1 to 4 hits (2 is 32nds), placed on whole ticks inside the step the way the module would fire them, so they swing with the Timing. PITCH tunes a step up to 2 octaves up or down; on the module it would change the MIDI note only, since the trigger outs have no pitch. Rolls still owns Hihat 2, so its ratchets rest while Rolls is on. Both play here, export in Download MIDI, and save with your beat and your banks. A bank keeps them in a side file, PatternExtNNN.txt, so its PatternBank file stays exactly the module's format.</p>
-      <p><b>Firmware lab.</b> Build your own experimental firmware from the official file: give each Timing button a different table (factory, an alt table, or your own from the creator), then flash it over USB. The page never contains firmware. You bring the official file, and recipes let others rebuild the same mods from theirs.</p>
+      <p><b>Firmware lab.</b> Now the STOLPERBEATS ULTRA flasher, a separate page on the same site: give each Timing button a different table (factory, an alt table, or your own from the creator), add ratchets, pitch and fill mode, and flash it over USB. It never contains firmware. You bring the official file.</p>
       <p><b>Download MIDI.</b> The button above the grid saves all 4 bars exactly as they play, swing and all, so the groove survives on a straight DAW grid: every hit where the grid shows it, with the Timing, Shuffle, Feel and Rolls, step ratchets and pitch, accents as velocity, at the current tempo. Muted tracks and hits Linear silences are left out. It's four bars of GM drums (Kick 36, Snare 38, Hihat 1 42, Hihat 2 46, Perc 1 39, Perc 2 63) at 960 ticks per beat.</p>
       <p><b>Creator.</b> The CREATOR switch at the top swaps the Timing row for a table maker, with the same grid, kits, Feels and playback. Start from a Timing or from straight, then drag the steps in the half-bar view while it plays. The Shuffle slider picks the level you're editing, and a level you haven't touched yet starts as a copy of the one before. Every Timing made here keeps to the module's rules: whole ticks, 16 to 36 ticks per beat in steps of 4, every step at least 1 tick, and the half bar's 8 lengths adding up to 2N. Save adds it to the alt tables, Export saves its 7 rows as a file, and Import loads one back. Saved Timings stay in this browser only, so export the ones you want to keep.</p>
       <p>See Sources below for what's read from firmware and what's matched.</p>
@@ -614,7 +576,7 @@ a.dl{text-decoration:none;display:inline-block}
     <div class="wide">
       <h3 class="ok">✓ Alt tables: HOPP, DEEP, SQEZ, CLSTR and FOLD</h3>
       <ul>
-        <li>Every alt table is held as the module holds its own: one ticks-per-beat value per level (16, 20, 24, 28, 32 or 36, all divisible by 4 so the Subdiv clock out stays even) and whole-tick step lengths whose half bar adds up to 2N. Level 0 is straight. Download tables gives the rows, and the Firmware lab writes them into a Timing button's table.</li>
+        <li>Every alt table is held as the module holds its own: one ticks-per-beat value per level (16, 20, 24, 28, 32 or 36, all divisible by 4 so the Subdiv clock out stays even) and whole-tick step lengths whose half bar adds up to 2N. Level 0 is straight. Download tables gives the rows, and the ULTRA flasher writes them into a Timing button's table.</li>
         <li>HOPP is MPC and Linn style 16th swing: every second 16th lands late, at 55.6, 56.3, 58.3, 62.5, 66.7 and 71.4% on grids of 36, 32, 24, 32, 36 and 28 ticks per beat. The last is Linn's 71% step. Background: Linn's 54/58/62/66/71 ladder (<a href="https://www.attackmagazine.com/features/interview/roger-linn-swing-groove-magic-mpc-timing/" style="color:inherit">Attack, Roger Linn interview</a>, MPC60 manual) and breakbeat swing medians near 54.5% (<a href="https://shamslab.psych.ucla.edu/wp-content/uploads/sites/57/2017/01/Frane_SwingInBreakbeats_2017.pdf" style="color:inherit">Frane 2017</a>).</li>
         <li>DEEP swings at two levels: each beat's 8ths split 52 to 66.7%, then each 8th's two 16ths split 52 to 60% inside it, rounded to whole ticks on 36, 24, 36, 36, 36 and 32 ticks per beat. Downbeats stay; the gaps shrink across each beat.</li>
         <li>SQEZ was made in the creator. It starts like CLSTR, then squeezes the "&amp;" and "a" up against the next downbeat, on 36, 20, 36, 32, 28 and 36 ticks per beat. Levels 5 and 6 have 2-tick steps.</li>
@@ -635,7 +597,7 @@ const TIMINGS=[
   {key:"Shake",blurb:"long-short swing", desc:"Classic long-short swing on every pair of 16ths."},
   {key:"Push", blurb:"makes time for the downbeat", desc:"Steps lean late, making room for each downbeat."},
   {key:"Clave",blurb:"3:3:2 holds, the rest swings", desc:"3:3:2 anchors hold while the other steps swing."},
-  // Alt tables: plain module rows, the same shape as the factory tables, so the Firmware lab can put any of them on a
+  // Alt tables: plain module rows, the same shape as the factory tables, so the ULTRA flasher can put any of them on a
   // Timing button. DEEP, FOLD, CLSTR and SQEZ have run on a real module (test builds 164 to 166).
   {key:"HOPP", alt:true, blurb:"MPC / Linn 16th swing", desc:"MPC-style 16th swing on the module's own grids: every second 16th lands late."},
   {key:"DEEP", alt:true, blurb:"two-level swing", desc:"8ths swing, then each 8th's two 16ths swing again inside it."},
@@ -1148,7 +1110,7 @@ function update(){
 // ---------- controls ----------
 // Two groups, captioned like panel silkscreen: the module's four Timing buttons, then the alt tables (and yours).
 const tWrap=document.getElementById("timing"), tGroups={};
-for(const [g,cap] of [["stolper","Stolperbeats"],["alt","Alt tables · try them, then flash them in the Firmware lab"]]){
+for(const [g,cap] of [["stolper","Stolperbeats"],["alt","Alt tables · try them, then flash them with ULTRA"]]){
   const grp=document.createElement("div"); grp.className="tgroup "+g;
   grp.innerHTML=`<div class="tbtns"></div><span class="tcap">${cap}</span>`;
   tWrap.appendChild(grp); tGroups[g]=grp;
@@ -1798,7 +1760,7 @@ function tablesReadme(st){
 "  One row per level: the ticks per beat, then 16 step lengths (one bar of 16ths).",
 "  Each step plays at the running total of the lengths before it.",
 "  Level 0 is straight. Every grid is 16 to 36 ticks per beat in steps of 4, like the module's own.",
-"  To try it on a module, use the Firmware lab on the visualiser page with your own official firmware file.",
+"  To try it on a module, use the STOLPERBEATS ULTRA flasher (https://thisisbribery.github.io/stolperbeats-ultra-v1/) with your own official firmware file.",
 "",
 "",
 "MIDI GROOVES IN ABLETON LIVE",
@@ -2128,280 +2090,6 @@ modeBtns.forEach(b=>b.addEventListener("click",()=>setCreator(b.dataset.mode==="
 buildFrom(); syncDraft();
 
 drawKits(); drawFeels(); drawBeats(); drawBanks(); drawModule(); update();
-
-// ---------- Firmware lab: patch the user's own official firmware file, and flash it over USB ----------
-// No firmware is in this page. The user opens the official .bin; we find the four Timing tables by their known values
-// (never by fixed addresses, so it works across versions and refuses anything it doesn't recognise), write the rows
-// the user picked, and hand the file back. Every mod is a list of byte writes, checked before anything is built.
-const FW={base:0x08000000, file:null, name:"", bytes:null, sha:"", ver:"", tables:null, nTable:null, built:null, builtName:"", recipeCustom:{}};
-const SLOTS=["Trip","Shake","Push","Clave"];
-// SHA-256 of official files checked here (a hash, not firmware), so the page can say "this is the official file".
-const KNOWN_OFFICIAL={"c04df924138322ad4ab6ee900fe596eb8e9e037da0454278865fb9a474befa34":"163"};
-const fwSel={Trip:"Factory",Shake:"Factory",Push:"Factory",Clave:"Factory"};
-const hex=n=>"0x"+n.toString(16).toUpperCase().padStart(8,"0");
-const sha256=async b=>[...new Uint8Array(await crypto.subtle.digest("SHA-256",b))].map(x=>x.toString(16).padStart(2,"0")).join("");
-// Find every place a list of numbers is stored, at 1, 2 or 4 bytes each, little-endian.
-function findSeq(b,vals,w){
-  const out=[], n=vals.length*w;
-  outer: for(let i=0;i+n<=b.length;i++){
-    for(let j=0;j<vals.length;j++){ let v=0; for(let k=0;k<w;k++) v|=b[i+j*w+k]<<(8*k); if((v>>>0)!==vals[j]) continue outer; }
-    out.push(i);
-  }
-  return out;
-}
-const factoryFlat=t=>DATA[t].flat();
-// Read the file: an STM32 image at 0x08000000, then the four 7x16 tables and the ticks-per-beat table.
-function analyseFirmware(b){
-  const r={ok:false,problems:[],notes:[]};
-  if(b.length<1024||b.length>2*1024*1024){ r.problems.push(`it's ${b.length} bytes, which isn't a firmware image this size`); return r; }
-  const w32=o=>(b[o]|b[o+1]<<8|b[o+2]<<16|b[o+3]<<24)>>>0, sp=w32(0), rv=w32(4);
-  if(!((sp>=0x20000000&&sp<=0x24100000)||(sp>=0x30000000&&sp<=0x30050000))||!(rv&1)||rv<0x08000000||rv>=0x08000000+b.length)
-    r.problems.push("it doesn't start like an STM32 firmware image");
-  let width=0; const tables={};
-  for(const w of [1,2,4]){ const hits=SLOTS.map(t=>findSeq(b,factoryFlat(t),w)); if(hits.some(h=>h.length)){ width=w; SLOTS.forEach((t,i)=>tables[t]=hits[i]); break; } }
-  if(!width){ r.problems.push("the four factory Timing tables aren't in it. Start from an unmodified official file"); return r; }
-  for(const t of SLOTS){
-    if(tables[t].length!==1){ r.problems.push(tables[t].length?`the ${t} table appears ${tables[t].length} times, so it's not safe to change`:`the factory ${t} table isn't in it, so it looks already modified. Start from the official file`); continue; }
-    tables[t]=tables[t][0];
-  }
-  if(r.problems.length) return r;
-  // Ticks per beat: one entry per row (28, the module's layout) or one per Shuffle setting (7)
-  const per28=[0,1,2,3].flatMap(()=>DATA.N), near=o=>Math.abs(o-(tables.Clave+112*width))<=64*width;
-  let nt=findSeq(b,per28,width).map(o=>({o,len:28}));
-  if(!nt.length) nt=findSeq(b,DATA.N,width).map(o=>({o,len:7}));
-  if(nt.length>1) nt=nt.filter(x=>near(x.o));
-  if(nt.length!==1){ r.problems.push("the ticks-per-beat table isn't where it's expected"); return r; }
-  r.nTable={...nt[0],width}; r.tables=tables; r.width=width; r.ok=true;
-  if(r.nTable.len===7) r.notes.push("This version has one ticks-per-beat value per Shuffle setting, so only styles on the factory grids can go in.");
-  return r;
-}
-
-// Rows for a slot choice: 7 rows of {ticksPerBeat, stepLengths[16]}. Factory rows come from the opened file itself.
-const fwStyles=()=>["HOPP","DEEP","SQEZ","CLSTR","FOLD"];
-function rowsFor(choice,slot){
-  const src=choice==="Factory"?slot:choice;
-  if(src.startsWith("Factory ")) return rowsFor("Factory",src.slice(8));
-  if(SLOTS.includes(src)) return DATA[src].map((lens,L)=>({ticksPerBeat:DATA.N[L],stepLengths:lens.slice()}));
-  if(FW.recipeCustom[src]) return FW.recipeCustom[src].map(r=>({ticksPerBeat:r.ticksPerBeat,stepLengths:r.stepLengths.slice()}));
-  const levels=levelsFrom(src);
-  return [straightLevel(16),...levels].map(L=>{ const lens=L.pos.map((p,k)=>(k<7?L.pos[k+1]:2*L.N)-p); return {ticksPerBeat:L.N,stepLengths:[...lens,...lens]}; });
-}
-function slotProblems(rows){
-  const p=[];
-  rows.forEach((r,L)=>{ if(!rowOk(r)) p.push(`level ${L} breaks the module's rules`); });
-  if(FW.nTable&&FW.nTable.len===7) rows.forEach((r,L)=>{ if(r.ticksPerBeat!==DATA.N[L]) p.push(`level ${L} needs ${r.ticksPerBeat} ticks per beat, this version only has ${DATA.N[L]}`); });
-  return p;
-}
-// The byte writes for the current picks. Throws if anything is off, so a bad build never gets made.
-function fwPatches(){
-  const t=FW.tables, w=FW.width, out=[];
-  const put=(o,v,why)=>{ for(let k=0;k<w;k++) out.push({o:o+k,v:(v>>>(8*k))&255,why}); };
-  SLOTS.forEach((slot,i)=>{
-    const ch=fwSel[slot]; if(ch==="Factory") return;
-    const rows=rowsFor(ch,slot), bad=slotProblems(rows);
-    if(bad.length) throw new Error(`${slot}: ${bad[0]}`);
-    rows.forEach((r,L)=>{ r.stepLengths.forEach((x,k)=>put(t[slot]+(L*16+k)*w,x,`${slot} level ${L}`));
-      if(FW.nTable.len===28) put(FW.nTable.o+(7*i+L)*w,r.ticksPerBeat,`${slot} level ${L} ticks per beat`); });
-  });
-  return out;
-}
-function fwBuild(){
-  const ps=fwPatches(), b=FW.bytes.slice(); let changed=0; const by=new Map(); // one line per table row that changed
-  for(const x of ps){ if(b[x.o]!==x.v){ b[x.o]=x.v; changed++; const g=by.get(x.why)||{start:x.o,end:x.o,why:x.why,n:0};
-    g.start=Math.min(g.start,x.o); g.end=Math.max(g.end,x.o); g.n++; by.set(x.why,g); } }
-  return {b,changed,ranges:[...by.values()].sort((p,q)=>p.start-q.start)};
-}
-// e.g. "PushDEEP-ClaveSQEZ": which buttons changed, and to what
-const recipeCode=()=>SLOTS.filter(s=>fwSel[s]!=="Factory").map(s=>s+fwSel[s].replace(/^Factory /,"")).join("-")||"factory";
-
-// ----- UI -----
-const fwInfo=document.getElementById("fwInfo"), fwOut=document.getElementById("fwOut"), fwStatus=document.getElementById("fwStatus");
-function drawFwSlots(){
-  const wrap=document.getElementById("fwSlots"); wrap.innerHTML="";
-  const mine=mineKeys(), custom=Object.keys(FW.recipeCustom).filter(k=>!mine.includes(k));
-  let anyBad=false;
-  for(const slot of SLOTS){
-    const d=document.createElement("div"), ch=fwSel[slot]; d.className="fwslot"+(ch==="Factory"?"":" changed");
-    const opt=(v,l)=>`<option value="${v}"${v===ch?" selected":""}>${l}</option>`;
-    d.innerHTML=`<div class="lbl">${slot.toUpperCase()} BUTTON</div><select aria-label="${slot} button plays">${opt("Factory",`Factory ${slot}`)}
-      <optgroup label="Factory tables">${SLOTS.filter(x=>x!==slot).map(x=>opt("Factory "+x,`Factory ${x}`)).join("")}</optgroup>
-      <optgroup label="Styles from this page">${fwStyles().map(x=>opt(x,x)).join("")}</optgroup>
-      ${mine.length||custom.length?`<optgroup label="Yours">${[...mine,...custom].map(x=>opt(x,x)).join("")}</optgroup>`:""}</select><div class="meta"></div>`;
-    const rows=rowsFor(ch,slot), bad=FW.tables?slotProblems(rows):rows.some(r=>!rowOk(r))?["breaks the module's rules"]:[];
-    anyBad=anyBad||bad.length>0;
-    d.querySelector(".meta").innerHTML=bad.length?`<span class="bad">${bad[0]}</span>`:`Ticks per beat, levels 0 to 6: ${rows.map(r=>r.ticksPerBeat).join(" ")}`;
-    d.querySelector("select").addEventListener("change",e=>{ fwSel[slot]=e.target.value; FW.built=null; drawFw(); });
-    const aud=document.createElement("button"); aud.className="dl aud"; aud.type="button"; aud.textContent="Hear it";
-    aud.title="Play this style in the visualiser above";
-    aud.addEventListener("click",()=>{ const src=ch==="Factory"?slot:ch.replace(/^Factory /,"");
-      if(FW.recipeCustom[src]&&!TIMINGS.find(x=>x.key===src)) return fwMsg(fwOut,`${src} came from a recipe. Import it in the creator to hear it.`,true);
-      if(state.creator) setCreator(false);
-      state.timing=src; if(state.shuffle===0) state.shuffle=4; update(); document.querySelector(".panel").scrollIntoView({behavior:"smooth",block:"start"}); });
-    d.appendChild(aud); wrap.appendChild(d);
-  }
-  return anyBad;
-}
-function fwMsg(el,html,bad){ el.innerHTML=bad?`<span class="bad">${html}</span>`:html; }
-function drawFw(){
-  const anyBad=drawFwSlots(), changes=SLOTS.filter(s=>fwSel[s]!=="Factory").length;
-  document.getElementById("fwSlotNote").textContent="Swapping a table keeps each button's other behaviour: its accents, and which Shuffle levels roll on every tick. "+
-    "The same kind of swap ran on a real module in test builds 164 to 166. Make your own styles in the CREATOR and they show up here under Yours.";
-  document.getElementById("fwBuild").disabled=!FW.tables||!changes||anyBad;
-  document.getElementById("fwBuild").title=!FW.tables?"Open the official .bin first":!changes?"Pick at least one mod":anyBad?"Fix the slot marked in orange":"";
-  document.getElementById("fwFlash").disabled=!FW.built||!dfu.dev;
-  document.getElementById("fwRestore").disabled=!FW.bytes||!dfu.dev;
-  document.getElementById("fwCmd").textContent=`sudo dfu-util -a 0 -s 0x08000000 -D ${FW.builtName||"your-build.bin"}`;
-}
-async function openFirmware(f){
-  const b=new Uint8Array(await f.arrayBuffer()), r=analyseFirmware(b);
-  FW.built=null; fwOut.innerHTML="";
-  if(!r.ok){ FW.bytes=null; FW.tables=null; fwMsg(fwInfo,`${f.name}: ${r.problems[0]}. Nothing was changed.`,true); drawFw(); return; }
-  Object.assign(FW,{file:f,name:f.name,bytes:b,tables:r.tables,nTable:r.nTable,width:r.width,ver:(f.name.match(/-(\d+)\.bin$/i)||[])[1]||"",sha:await sha256(b)});
-  const official=KNOWN_OFFICIAL[FW.sha];
-  fwInfo.innerHTML=`<span class="ok">✓</span> <b>${f.name}</b>, ${(b.length/1024).toFixed(0)} KB${FW.ver?`, version ${FW.ver}`:""}${official?`, <span class="ok">matches the official ${official} release</span>`:""}. `+
-    `Found the four Timing tables (${SLOTS.map(t=>`${t} ${hex(FW.base+r.tables[t])}`).join(", ")}) and the ticks-per-beat table (${hex(FW.base+r.nTable.o)}, ${r.nTable.len} entries). `+
-    `SHA-256 <span class="mono">${FW.sha.slice(0,16)}…</span>`+(r.notes.length?` <span class="bad">${r.notes.join(" ")}</span>`:"");
-  drawFw();
-}
-document.getElementById("fwOpen").addEventListener("click",()=>document.getElementById("fwFile").click());
-document.getElementById("fwFile").addEventListener("change",e=>{ const f=e.target.files[0]; e.target.value=""; if(f) openFirmware(f); });
-const fwCard=document.getElementById("fwCard");
-fwCard.addEventListener("dragover",e=>{ e.preventDefault(); fwCard.classList.add("dragging"); });
-fwCard.addEventListener("dragleave",()=>fwCard.classList.remove("dragging"));
-fwCard.addEventListener("drop",e=>{ e.preventDefault(); fwCard.classList.remove("dragging"); const f=[...e.dataTransfer.files][0]; if(!f) return;
-  fwCard.open=true; if(/\.json$/i.test(f.name)) f.text().then(openRecipe); else openFirmware(f); });
-document.getElementById("fwBuild").addEventListener("click",()=>{
-  try{
-    const {b,changed,ranges}=fwBuild(), code=recipeCode();
-    FW.built=b; FW.builtName=`${FW.name.replace(/\.bin$/i,"")}-mod-${code}.bin`.replace(/^_+/,"");
-    download(FW.builtName,new Blob([b],{type:"application/octet-stream"}));
-    sha256(b).then(h=>{ FW.builtSha=h; fwOut.innerHTML=`<span class="ok">✓</span> Built <b>${FW.builtName}</b>: ${changed} bytes changed in ${ranges.length} place${ranges.length>1?"s":""}. SHA-256 <span class="mono">${h.slice(0,16)}…</span>`+
-      `<pre class="fwlog">${ranges.map(x=>`${hex(FW.base+x.start)}  ${String(x.n).padStart(2)} byte${x.n>1?"s":" "}  ${x.why}`).join("\n")}</pre>`; drawFw(); });
-  }catch(err){ fwMsg(fwOut,`Not built: ${err.message}.`,true); }
-});
-// Recipes: the picks plus any of your own timings' rows, so someone else can rebuild the same firmware from their own file
-function recipe(){
-  const custom={};
-  for(const s of SLOTS){ const c=fwSel[s]; if(c!=="Factory"&&!c.startsWith("Factory ")&&!fwStyles().includes(c)) custom[c]=rowsFor(c,s).map(r=>({ticksPerBeat:r.ticksPerBeat,stepLengths:r.stepLengths})); }
-  return {stolperbeatsFirmwareRecipe:1,note:"Mods only, no firmware. Open it in the Firmware lab with your own official file.",
-    base:FW.bytes?{file:FW.name,version:FW.ver,sha256:FW.sha}:null,buttons:{...fwSel},custom};
-}
-function openRecipe(text){
-  try{
-    const o=JSON.parse(text); if(!o||o.stolperbeatsFirmwareRecipe!==1||!o.buttons) throw new Error("not a Firmware lab recipe");
-    const custom={}; for(const [k,rows] of Object.entries(o.custom||{})){
-      if(!/^[A-Z0-9]{1,5}$/.test(k)||!Array.isArray(rows)||rows.length!==7) throw new Error(`${k} isn't 7 rows`);
-      const rr=rows.map(r=>({ticksPerBeat:+r.ticksPerBeat,stepLengths:(r.stepLengths||[]).map(Number)}));
-      if(!rr.every(r=>r.stepLengths.length===16&&rowOk(r))) throw new Error(`${k} breaks the module's rules`); custom[k]=rr; }
-    const ok=v=>v==="Factory"||SLOTS.some(s=>v==="Factory "+s)||fwStyles().includes(v)||custom[v]||mineKeys().includes(v);
-    for(const s of SLOTS) if(!ok(o.buttons[s])) throw new Error(`${s}: ${o.buttons[s]} isn't available here`);
-    FW.recipeCustom=custom; SLOTS.forEach(s=>fwSel[s]=o.buttons[s]); FW.built=null; drawFw();
-    const warn=o.base&&FW.sha&&o.base.sha256&&o.base.sha256!==FW.sha?` It was made from ${o.base.file||"a different file"}, not the one you opened, so check the slots before building.`:"";
-    fwMsg(fwOut,`Recipe loaded.${warn}`,!!warn);
-  }catch(err){ fwMsg(fwOut,`Couldn't open that recipe: ${err.message}.`,true); }
-}
-document.getElementById("fwRecipe").addEventListener("click",()=>download(`stolperbeats-recipe-${recipeCode()}.json`,new Blob([JSON.stringify(recipe(),null,1)],{type:"application/json"})));
-document.getElementById("fwRecipeOpen").addEventListener("click",()=>document.getElementById("fwRecipeFile").click());
-document.getElementById("fwRecipeFile").addEventListener("change",e=>{ const f=e.target.files[0]; e.target.value=""; if(f) f.text().then(openRecipe); });
-
-// ----- Flashing: the STM32's built-in USB DFU bootloader (DfuSe), the same one dfu-util talks to -----
-// The bootloader is in the chip's ROM, so a bad flash can always be fixed by flashing the official file again.
-const DFU_REQ={DNLOAD:1,UPLOAD:2,GETSTATUS:3,CLRSTATUS:4,ABORT:6}, ST={IDLE:2,DNSYNC:3,DNBUSY:4,DNIDLE:5,UPIDLE:9,ERROR:10};
-const dfu={dev:null,intf:0,alt:0,xfer:1024,segs:[]};
-const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-// "@Internal Flash  /0x08000000/16*128Kg" -> [{start,size,erasable,writable}]
-function parseDfuseLayout(name){
-  const segs=[], parts=String(name||"").split("/");
-  for(let i=1;i+1<parts.length;i+=2){
-    let addr=parseInt(parts[i].trim(),16);
-    for(const spec of parts[i+1].split(",")){
-      const m=spec.trim().match(/^(\d+)\*(\d+)\s*([ KM]?)([a-g])$/i); if(!m) continue;
-      const size=+m[2]*({K:1024,M:1048576}[m[3].toUpperCase()]||1), perm=m[4].toLowerCase().charCodeAt(0)-96;
-      for(let k=0;k<+m[1];k++){ segs.push({start:addr,size,erasable:!!(perm&2),writable:!!(perm&4)}); addr+=size; }
-    }
-  }
-  return segs;
-}
-const ctl=(req,value)=>({requestType:"class",recipient:"interface",request:req,value,index:dfu.intf});
-async function dOut(req,value,data){ const r=await dfu.dev.controlTransferOut(ctl(req,value),data||new Uint8Array(0)); if(r.status!=="ok") throw new Error(`USB ${r.status}`); }
-async function dIn(req,value,len){ const r=await dfu.dev.controlTransferIn(ctl(req,value),len); if(r.status!=="ok") throw new Error(`USB ${r.status}`); return new Uint8Array(r.data.buffer,r.data.byteOffset,r.data.byteLength); }
-async function dStatus(){ const d=await dIn(DFU_REQ.GETSTATUS,0,6); return {status:d[0],poll:d[1]|d[2]<<8|d[3]<<16,state:d[4]}; }
-async function dWait(){ // after a download: poll until the device has finished
-  for(let i=0;i<20000;i++){ const s=await dStatus(); if(s.status) throw new Error(`the module reported error ${s.status}`);
-    if(s.state===ST.DNBUSY||s.state===ST.DNSYNC){ await sleep(Math.max(1,s.poll)); continue; } return s; }
-  throw new Error("timed out");
-}
-async function dIdle(){
-  let s=await dStatus(); if(s.state===ST.ERROR){ await dOut(DFU_REQ.CLRSTATUS,0); s=await dStatus(); }
-  if(s.state!==ST.IDLE){ await dOut(DFU_REQ.ABORT,0); s=await dStatus(); }
-  if(s.state!==ST.IDLE) throw new Error(`the bootloader is busy (state ${s.state})`);
-}
-async function dCmd(bytes){ await dOut(DFU_REQ.DNLOAD,0,new Uint8Array(bytes)); const s=await dWait(); if(s.state!==ST.DNIDLE) throw new Error(`command ${bytes[0].toString(16)} failed (state ${s.state})`); }
-const le32=a=>[a&255,(a>>>8)&255,(a>>>16)&255,(a>>>24)&255];
-async function dfuConnect(){
-  if(!navigator.usb) throw new Error("this browser can't flash over USB. Use Chrome or Edge on a computer, or dfu-util below");
-  const dev=await navigator.usb.requestDevice({filters:[{vendorId:0x0483,productId:0xdf11}]});
-  await dev.open(); if(dev.configuration===null) await dev.selectConfiguration(1);
-  const cands=[]; // DFU interfaces; the internal flash one is what dfu-util -a 0 picks on these chips
-  for(const itf of dev.configuration.interfaces) for(const a of itf.alternates)
-    if(a.interfaceClass===0xfe&&a.interfaceSubclass===1) cands.push({intf:itf.interfaceNumber,alt:a.alternateSetting,name:a.interfaceName||""});
-  const pick=cands.find(c=>/^@Internal Flash/i.test(c.name))||cands[0];
-  if(!pick) throw new Error("that device isn't an STM32 DFU bootloader");
-  await dev.claimInterface(pick.intf); await dev.selectAlternateInterface(pick.intf,pick.alt);
-  Object.assign(dfu,{dev,intf:pick.intf,alt:pick.alt,segs:parseDfuseLayout(pick.name)});
-  // wTransferSize from the DFU functional descriptor in the configuration descriptor
-  try{ const h=await dev.controlTransferIn({requestType:"standard",recipient:"device",request:6,value:0x0200,index:0},9);
-    const tot=new DataView(h.data.buffer).getUint16(2,true), c=await dev.controlTransferIn({requestType:"standard",recipient:"device",request:6,value:0x0200,index:0},tot);
-    const d=new Uint8Array(c.data.buffer); for(let i=0;i<d.length&&d[i];i+=d[i]) if(d[i+1]===0x21&&d[i]>=7){ dfu.xfer=d[i+5]|d[i+6]<<8; break; } }catch(e){}
-  if(!dfu.segs.length) throw new Error(`can't read the flash layout ("${pick.name}")`);
-  return pick.name;
-}
-async function dfuFlash(image,onStep){
-  const start=FW.base, end=start+image.length, segs=dfu.segs.filter(s=>s.start<end&&s.start+s.size>start);
-  if(!segs.length||end>dfu.segs[dfu.segs.length-1].start+dfu.segs[dfu.segs.length-1].size) throw new Error("the image doesn't fit this chip's flash");
-  if(segs.some(s=>!s.erasable||!s.writable)) throw new Error("part of that flash is read-only");
-  await dIdle();
-  for(let i=0;i<segs.length;i++){ onStep("Erasing",i/segs.length); await dCmd([0x41,...le32(segs[i].start)]); }
-  const X=dfu.xfer;
-  for(let off=0;off<image.length;off+=X){
-    onStep("Writing",off/image.length);
-    await dCmd([0x21,...le32(start+off)]);
-    await dOut(DFU_REQ.DNLOAD,2,image.subarray(off,Math.min(off+X,image.length)));
-    const s=await dWait(); if(s.state!==ST.DNIDLE) throw new Error(`write failed at ${hex(start+off)}`);
-  }
-  // Read it back and compare, so a bad write is caught here and not on stage
-  await dIdle(); await dCmd([0x21,...le32(start)]); await dIdle();
-  const back=new Uint8Array(image.length);
-  for(let off=0,blk=2;off<image.length;off+=X,blk++){ onStep("Checking",off/image.length);
-    const d=await dIn(DFU_REQ.UPLOAD,blk,Math.min(X,image.length-off)); back.set(d.subarray(0,Math.min(X,image.length-off)),off); }
-  await dIdle();
-  for(let i=0;i<image.length;i++) if(back[i]!==image[i]) throw new Error(`check failed at ${hex(start+i)}. Flash it again, or flash the official file`);
-  onStep("Starting",1);
-  try{ await dCmd([0x21,...le32(start)]); await dOut(DFU_REQ.DNLOAD,0); await dStatus(); }catch(e){} // the module leaves DFU and restarts
-  try{ await dfu.dev.close(); }catch(e){}
-  dfu.dev=null;
-}
-const fwProg=document.getElementById("fwProg");
-document.getElementById("fwConnect").addEventListener("click",async()=>{
-  try{ const name=await dfuConnect(); fwMsg(fwStatus,`<span class="ok">✓</span> Connected to the bootloader (${name.trim()||"STM32 DFU"}, ${dfu.segs.length} flash sectors, ${dfu.xfer}-byte blocks).`); }
-  catch(err){ if(err.name!=="NotFoundError") fwMsg(fwStatus,`Couldn't connect: ${err.message}.`,true); else fwMsg(fwStatus,"No module picked. It shows up as <b>STM32 BOOTLOADER</b> or <b>DFU in FS Mode</b> once you've done BOOT and RESET."); }
-  drawFw();
-});
-async function runFlash(image,label){
-  if(!dfu.dev) return;
-  if(!confirm(`Flash ${label} to the module? Keep the USB cable in until it says done.`)) return;
-  fwProg.hidden=false; fwProg.value=0;
-  try{
-    await dfuFlash(image,(what,f)=>{ fwProg.value=f; fwStatus.textContent=`${what}… ${Math.round(f*100)}%`; });
-    fwProg.value=1; fwMsg(fwStatus,`<span class="ok">✓</span> Done: ${label} is on the module and checked byte for byte. If it doesn't restart by itself, press RESET.`);
-  }catch(err){ fwMsg(fwStatus,`Stopped: ${err.message}. The bootloader is still there: do BOOT and RESET again and flash the official file to get back to normal.`,true); dfu.dev=null; }
-  drawFw();
-}
-document.getElementById("fwFlash").addEventListener("click",()=>FW.built&&runFlash(FW.built,FW.builtName));
-document.getElementById("fwRestore").addEventListener("click",()=>FW.bytes&&runFlash(FW.bytes,FW.name));
-if(navigator.usb) navigator.usb.addEventListener("disconnect",e=>{ if(e.device===dfu.dev){ dfu.dev=null; drawFw(); } });
-
-drawFw();
 </script>
 </body>
 </html>

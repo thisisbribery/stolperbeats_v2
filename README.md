@@ -1,6 +1,6 @@
 # Stolperbeats Visualiser v2
 
-A visualiser and emulator of the MSM Stolperbeats eurorack module. See and hear exactly where its Timings put each hit, program its pattern banks, and try alt timing tables on your own module with the Firmware lab. Unofficial, for educational purposes only. See the [disclaimer](#disclaimer).
+A visualiser and emulator of the MSM Stolperbeats eurorack module. See and hear exactly where its Timings put each hit, program its pattern banks, and try alt timing tables on your own module with the [STOLPERBEATS ULTRA flasher](https://thisisbribery.github.io/stolperbeats-ultra-v1/). Unofficial, for educational purposes only. See the [disclaimer](#disclaimer).
 
 v2 is focused on the module only. The earlier page, with Deluge styles and proposed extras, stays at [stolperbeats_v1](https://github.com/thisisbribery/stolperbeats_v1).
 
@@ -20,8 +20,7 @@ Pick a Timing, turn the Shuffle control and press Play. Audio starts on your fir
 - **Four bars, like the module.** Kick and Snare run 4 bars (64 steps). The hats and percs loop 1 bar (16 steps) under them.
 - **SKETCH and MODULE modes.** Play your own beats, or your pattern banks the way the module picks them.
 - **Pattern banks.** Import, edit and download the module's `PatternBankNNN.txt` files.
-- **Firmware lab.** Put alt tables on the Timing buttons of your own official firmware and flash it over USB.
-- **[STOLPERBEATS ULTRA flasher](https://thisisbribery.github.io/stolperbeats-ultra-v1/)**, a separate page: the same tables plus ratchets, MIDI pitch, fill mode and a fill CV gate.
+- **Firmware lab**, now the **[STOLPERBEATS ULTRA flasher](https://thisisbribery.github.io/stolperbeats-ultra-v1/)**, a separate page: alt tables on the Timing buttons of your own official firmware, plus ratchets, MIDI pitch, fill mode and a fill CV gate, flashed over USB.
 - **15 preset beats**, **Hear straight**, and **808, 909 and 606 kits** synthesised in the browser.
 - **A close-up** of half a bar, with the tick each step lands on and its offset in ms.
 - **A timing creator** for making your own tables by hand.
@@ -46,7 +45,7 @@ Every Timing runs 0 to 6 like the module's Shuffle, with 0 meaning straight 16th
 
 ### Alt tables
 
-Each alt table is held in the module's own row format, so you can hear it here and then put it on any Timing button with the Firmware lab.
+Each alt table is held in the module's own row format, so you can hear it here and then put it on any Timing button with the [ULTRA flasher](https://thisisbribery.github.io/stolperbeats-ultra-v1/).
 
 | Table | What it does | On a real module |
 |---|---|---|
@@ -128,34 +127,15 @@ Kick and Snare hold four 16-step bars separated by `, `. The others hold one. `1
 
 ## Firmware lab
 
-Build your own experimental Stolperbeats firmware, then flash it, all in the page. The **Firmware lab** panel near the bottom starts closed.
+The Firmware lab has moved to the **[STOLPERBEATS ULTRA flasher](https://thisisbribery.github.io/stolperbeats-ultra-v1/)**, a separate page on the same site. The panel near the bottom of the visualiser now links there.
 
-This repo and page never contain firmware. You download the official file from [Making Sound Machines](https://makingsoundmachines.com/firmware/), the page changes it in your browser, and hands it back. For personal, educational experiments only.
+It does everything the lab did, from the same official file: put a factory table, an alt table (HOPP, DEEP, SQEZ, CLSTR, FOLD) or your own Timing on each Timing button, build in the browser, and flash over USB. It adds ratchets, a MIDI note per step, fill mode and a fill CV gate. Both pages are on the same site, so Timings saved in the CREATOR show up there under **Yours**, and recipes saved from the old lab open there too.
 
-1. **Open the .bin** (or drop it on the panel). The page checks it's an STM32 image, then finds the four Timing tables and the ticks-per-beat table by their factory values, never by fixed addresses. If anything doesn't match exactly once, it stops and changes nothing. Start from an unmodified official file.
-2. **Pick your mods.** Each Timing button (Trip, Shake, Push, Clave) gets a menu: Factory, another factory table, an alt table (HOPP, DEEP, SQEZ, CLSTR, FOLD), or your own Timings from the CREATOR. **Hear it** plays the pick in the visualiser. A pick that breaks the module's rules is marked in orange and can't be built.
-3. **Build** downloads the new file, named for what changed (e.g. `..._hw_rev4-163-mod-PushDEEP-ClaveSQEZ.bin`), with a list of every byte range changed and its SHA-256.
-4. **Flash** over USB in Chrome or Edge: hold BOOT, press and release RESET, let go of BOOT, then **Connect** and **Flash my build**. The page erases only the sectors it needs, writes, reads everything back to check it byte for byte, then restarts the module. **Flash official file** puts the original back. Elsewhere, use `dfu-util` as the manual describes.
-
-The STM32 bootloader lives in the chip's ROM, so a bad flash can always be undone by flashing the official file again.
-
-**Want ratchets, pitch and fill mode too?** The [STOLPERBEATS ULTRA flasher](https://thisisbribery.github.io/stolperbeats-ultra-v1/) puts the same tables on the Timing buttons and adds those mods, from the same official file. Both pages are on the same site, so Timings saved in the CREATOR show up there under **Yours**, and Firmware lab recipes open there too.
-
-**Recipes.** Save recipe writes a small `.json` of your picks (and the rows of any of your own Timings), with no firmware in it. Anyone can open it with their own official file and build the same firmware. Share recipes, not `.bin` files.
-
-**What's been checked.** Opened on the official 163 file (SHA-256 `c04df924…`), the lab finds every table, and building Push = DEEP with Clave = SQEZ gives a file byte for byte identical to test build 166, which ran on a real module. The USB flashing is tested against a simulated bootloader; flashing a real module from the page hasn't been tried yet.
-
-### Adding a mod
-
-Mods live in `fwPatches()` in `index.html`. A mod is a list of byte writes. The rules:
-
-- Find what you change by its known content, and require exactly one match. Never hard-code an address.
-- Keep the module's own rules (for Timings: whole ticks, 16 to 36 ticks per beat in steps of 4, the half bar adds up to 2N). Check them before building, and throw if they fail.
-- Never add firmware bytes to the repo. Values you search for should be small and documented, like the timing tables.
+Neither page contains firmware. You download the official file from [Making Sound Machines](https://makingsoundmachines.com/firmware/), the flasher changes it in your browser, and hands it back. For personal, educational experiments only. The STM32 bootloader lives in the chip's ROM, so a bad flash can always be undone by flashing the official file again.
 
 ## Ratchets and pitch (experimental)
 
-This models an experimental firmware mod, so you can hear and program it here. The mod has run on a real module in a test build. To put it on your own module, use the [STOLPERBEATS ULTRA flasher](https://thisisbribery.github.io/stolperbeats-ultra-v1/) with your official file. It isn't in this repo or in the Firmware lab.
+This models an experimental firmware mod, so you can hear and program it here. The mod has run on a real module in a test build. To put it on your own module, use the [STOLPERBEATS ULTRA flasher](https://thisisbribery.github.io/stolperbeats-ultra-v1/) with your official file. It isn't in this repo.
 
 - **Draw** above the grid picks what a click edits: **HITS**, **RATCHET** or **PITCH**.
 - **RATCHET:** click a hit to step it through 1, 2 (32nds), 3 and 4 hits per step. Shift-click steps back, or scroll over the hit. Extra hits land on whole ticks inside the step, the way the module would fire them, so they swing with the Timing.
@@ -187,7 +167,7 @@ The test build reads and writes this same format, so a bank programmed here play
 
 ## Fill mode (experimental)
 
-A fill on demand, from an experimental firmware mod. It has run on a real module in a test build. To put it on your own module, use the [STOLPERBEATS ULTRA flasher](https://thisisbribery.github.io/stolperbeats-ultra-v1/) with your official file. It isn't in this repo or the Firmware lab, and it isn't modelled on this page yet.
+A fill on demand, from an experimental firmware mod. It has run on a real module in a test build. To put it on your own module, use the [STOLPERBEATS ULTRA flasher](https://thisisbribery.github.io/stolperbeats-ultra-v1/) with your official file. It isn't in this repo, and it isn't modelled on this page yet.
 
 A fill plays variations on top of your pattern on **Kick, Snare and Hihat 1**. Nothing is stored: your pattern is untouched, and every fill comes out different.
 
