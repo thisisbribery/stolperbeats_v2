@@ -21,6 +21,7 @@ Pick a Timing, turn the Shuffle control and press Play. Audio starts on your fir
 - **SKETCH and MODULE modes.** Play your own beats, or your pattern banks the way the module picks them.
 - **Pattern banks.** Import, edit and download the module's `PatternBankNNN.txt` files.
 - **Firmware lab.** Put alt tables on the Timing buttons of your own official firmware and flash it over USB.
+- **[STOLPERBEATS ULTRA flasher](https://thisisbribery.github.io/stolperbeats-ultra-v1/)**, a separate page: the same tables plus ratchets, MIDI pitch, fill mode and a fill CV gate.
 - **15 preset beats**, **Hear straight**, and **808, 909 and 606 kits** synthesised in the browser.
 - **A close-up** of half a bar, with the tick each step lands on and its offset in ms.
 - **A timing creator** for making your own tables by hand.
@@ -138,6 +139,8 @@ This repo and page never contain firmware. You download the official file from [
 
 The STM32 bootloader lives in the chip's ROM, so a bad flash can always be undone by flashing the official file again.
 
+**Want ratchets, pitch and fill mode too?** The [STOLPERBEATS ULTRA flasher](https://thisisbribery.github.io/stolperbeats-ultra-v1/) puts the same tables on the Timing buttons and adds those mods, from the same official file. Both pages are on the same site, so Timings saved in the CREATOR show up there under **Yours**, and Firmware lab recipes open there too.
+
 **Recipes.** Save recipe writes a small `.json` of your picks (and the rows of any of your own Timings), with no firmware in it. Anyone can open it with their own official file and build the same firmware. Share recipes, not `.bin` files.
 
 **What's been checked.** Opened on the official 163 file (SHA-256 `c04df924…`), the lab finds every table, and building Push = DEEP with Clave = SQEZ gives a file byte for byte identical to test build 166, which ran on a real module. The USB flashing is tested against a simulated bootloader; flashing a real module from the page hasn't been tried yet.
@@ -152,7 +155,7 @@ Mods live in `fwPatches()` in `index.html`. A mod is a list of byte writes. The 
 
 ## Ratchets and pitch (experimental)
 
-This models an experimental firmware mod, so you can hear and program it here. The mod has run on a real module in a private test build. It isn't in this repo or in the Firmware lab.
+This models an experimental firmware mod, so you can hear and program it here. The mod has run on a real module in a test build. To put it on your own module, use the [STOLPERBEATS ULTRA flasher](https://thisisbribery.github.io/stolperbeats-ultra-v1/) with your official file. It isn't in this repo or in the Firmware lab.
 
 - **Draw** above the grid picks what a click edits: **HITS**, **RATCHET** or **PITCH**.
 - **RATCHET:** click a hit to step it through 1, 2 (32nds), 3 and 4 hits per step. Shift-click steps back, or scroll over the hit. Extra hits land on whole ticks inside the step, the way the module would fire them, so they swing with the Timing.
@@ -184,7 +187,7 @@ The test build reads and writes this same format, so a bank programmed here play
 
 ## Fill mode (experimental)
 
-A fill on demand, from an experimental firmware mod. It has run on a real module in a private test build. It isn't in this repo, in the Firmware lab, or modelled on this page yet.
+A fill on demand, from an experimental firmware mod. It has run on a real module in a test build. To put it on your own module, use the [STOLPERBEATS ULTRA flasher](https://thisisbribery.github.io/stolperbeats-ultra-v1/) with your official file. It isn't in this repo or the Firmware lab, and it isn't modelled on this page yet.
 
 A fill plays variations on top of your pattern on **Kick, Snare and Hihat 1**. Nothing is stored: your pattern is untouched, and every fill comes out different.
 

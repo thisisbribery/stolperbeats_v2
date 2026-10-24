@@ -347,6 +347,8 @@ body:not(.creating) #creatorrow,body.creating #timingrow{display:none}
 #creatorrow .ctl-label{display:flex;align-items:center;gap:6px;margin-bottom:0;color:var(--mine);font-weight:700}
 .cacts{margin-left:auto;display:flex;align-items:center;gap:6px}
 .cacts .dl{margin-left:0}
+a.dl{text-decoration:none;display:inline-block}
+.fwultra{font-size:13px;border-left:3px solid var(--accent);padding:2px 0 2px 10px;margin:10px 0 0}
 .cname{width:70px;border:1px solid var(--line);background:var(--chip);color:var(--text);border-radius:6px;padding:1px 7px;font:600 12px/1.5 ui-monospace,"SF Mono",Menlo,monospace;letter-spacing:.1em;text-transform:uppercase}
 .cname:focus{outline:none;border-color:var(--mine)}
 .crow{display:flex;align-items:center;gap:8px;min-width:0;height:26px}
@@ -400,6 +402,7 @@ body:not(.creating) #creatorrow,body.creating #timingrow{display:none}
           <button class="dl" id="cExport" title="Download the 7 rows as a .timing.json file">Export</button>
           <button class="dl" id="cImport" title="Load a .timing.json, or a style's JSON from Download tables">Import</button>
           <input type="file" id="cFile" accept=".json,application/json" hidden>
+          <a class="dl" href="https://thisisbribery.github.io/stolperbeats-ultra-v1/" target="_blank" rel="noopener" title="Timings you save here show up in the STOLPERBEATS ULTRA flasher under Yours, ready to put on a Timing button">Flash it with ULTRA ↗</a>
         </span>
       </div>
       <div class="crow">
@@ -533,6 +536,7 @@ body:not(.creating) #creatorrow,body.creating #timingrow{display:none}
     <summary><span class="chev" aria-hidden="true"></span><span><b>Firmware lab</b> <span class="sum-sub">· build your own experimental firmware from the official file, and flash it</span></span></summary>
     <div class="fwbody">
       <p class="fwwarn"><b>Experimental, personal and educational use only.</b> This page never contains, stores or sends firmware. You bring the official file from Making Sound Machines, the page changes it in your browser, and hands it back. Not made, checked or supported by Making Sound Machines. You can always go back: flash the official file the same way.</p>
+      <p class="fwultra"><b>Want ratchets, pitch and fill mode too?</b> The <a href="https://thisisbribery.github.io/stolperbeats-ultra-v1/" target="_blank" rel="noopener">STOLPERBEATS ULTRA flasher</a> puts the same tables on the Timing buttons and adds ratchets, a MIDI note per step, fill mode and a fill CV gate, built from the same official file. Timings you save in the creator show up there, and recipes from this lab open there too.</p>
       <ol class="fwsteps">
         <li><b>Get the official firmware.</b> Download it from <a href="https://makingsoundmachines.com/firmware/" target="_blank" rel="noopener">makingsoundmachines.com/firmware</a>. It's named like <span class="mono">_MSM_stolperbeats_hw_rev4-163.bin</span>.
           <div class="fwrow"><button class="sbtn" id="fwOpen" type="button">Open the .bin</button><span class="fwdrop">or drop it on this panel</span><input type="file" id="fwFile" accept=".bin,application/octet-stream" hidden></div>
