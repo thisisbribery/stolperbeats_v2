@@ -25,7 +25,8 @@ Pick a Timing, turn the Shuffle control and press Play. Audio starts on your fir
 - **A close-up** of half a bar, with the tick each step lands on and its offset in ms.
 - **A timing creator** for making your own tables by hand.
 - **Download MIDI** of all 4 bars, swing and all.
-- **Ratchets and pitch per step** (experimental), modelling a proposed firmware mod.
+- **Ratchets and pitch per step** (experimental), modelling an experimental firmware mod.
+- **Fill mode** (experimental): notes on a firmware mod that adds five levels of fill on demand. See [Fill mode](#fill-mode-experimental).
 
 ## Timings
 
@@ -151,7 +152,7 @@ Mods live in `fwPatches()` in `index.html`. A mod is a list of byte writes. The 
 
 ## Ratchets and pitch (experimental)
 
-Not on the module today. This models a proposed firmware mod, so you can hear and program it before any firmware work.
+This models an experimental firmware mod, so you can hear and program it here. The mod has run on a real module in a private test build. It isn't in this repo or in the Firmware lab.
 
 - **Draw** above the grid picks what a click edits: **HITS**, **RATCHET** or **PITCH**.
 - **RATCHET:** click a hit to step it through 1, 2 (32nds), 3 and 4 hits per step. Shift-click steps back, or scroll over the hit. Extra hits land on whole ticks inside the step, the way the module would fire them, so they swing with the Timing.
@@ -160,7 +161,12 @@ Not on the module today. This models a proposed firmware mod, so you can hear an
 - Erasing a hit clears its ratchet and pitch. Copy to all bars copies them with the Kick and Snare.
 - Both play here, export in Download MIDI, and save with your beat and your banks.
 
-**Planned module controls:** in Pattern Edit, turn Shuffle 0 to 3 to set the ratchet on the step under the cursor. Hold Tap and turn the track's encoder to set its pitch.
+**Module controls (test build):**
+
+- In Pattern Edit, turn **Shuffle** to set the ratchet on the step under the cursor. The cursor step flashes once per hit.
+- Hold **Tap** and turn the track's encoder to set its pitch. The number shows on the bottom rows of LEDs.
+- Ratchets and pitch follow Pattern Edit's save and discard: release on the slow blink to keep them, on the fast blink to throw them away.
+- They're saved to the SD card in the side file below when the module saves its banks (on Stop), and load back at power on.
 
 ### Side file: PatternExtNNN.txt
 
@@ -173,6 +179,40 @@ HIHAT1 > PTN0 PITCH: 0 0 +12 0 0 0 0 0 0 0 0 0 -5 0 0 0;
 ```
 
 Ratchets are one digit per step (1 to 4). Pitch is one signed number per step (-24 to +24). Kick and Snare have four blocks of 16, the others one. Windows line endings. **Download bank** zips both files when the bank has any; **Import from SD** takes both, PatternBank files first.
+
+The test build reads and writes this same format, so a bank programmed here plays the same on the module, and a card from the module opens here.
+
+## Fill mode (experimental)
+
+A fill on demand, from an experimental firmware mod. It has run on a real module in a private test build. It isn't in this repo, in the Firmware lab, or modelled on this page yet.
+
+A fill plays variations on top of your pattern on **Kick, Snare and Hihat 1**. Nothing is stored: your pattern is untouched, and every fill comes out different.
+
+### Controls
+
+- **Fill mode on or off:** hold **Linear** and press **Tap**. Linear itself doesn't change. While Fill mode is on, the Shuffle LEDs breathe slowly.
+- **Fire a fill:** press **Tap**. It starts on the next step and runs to the end of the bar. Hold Tap to keep it going into the next bars.
+- **Pick the level:** hold **Tap** and turn **Shuffle**, 1 to 5. The number shows on the bottom rows. You can change it while a fill plays.
+- **Gate in:** while Fill mode is on, **Pattern CV 6** (Perc 2's pattern input) becomes a Fill gate. A rising gate fires a fill and a gate held high keeps it going. It switches on above about 1.5 V and off below about 1 V. With Fill mode off, CV 6 picks Perc 2's pattern as normal.
+- Tap tempo is off while Fill mode is on. The tempo encoder still works.
+- Fill mode and the level are saved in `MachineState.txt` and come back at power on (needs `WRITE_MACHINE_STATE` on in `MachineConfig.txt`).
+
+### The five levels
+
+| Level | Name | What it does |
+|---|---|---|
+| 1 | Ghost | Soft snare and hat hits on the "e" and "a", at 25 to 45% of the track's MIDI velocity. Kick untouched. |
+| 2 | Push | Hats on every 16th, snare in groups of 3 through the second half of the bar, and a pickup kick on step 16 (sometimes 15). |
+| 3 | Burst | Random hits, busier toward the end of the bar and on the "e" and "a", with some 2 or 3 hit ratchets. |
+| 4 | Build | Hits, ratchets and velocity climb to the downbeat, with 4-hit ratchets near the end. The snare's MIDI note steps up 0, +3, +5, +7 semitones per beat, like toms. |
+| 5 | Chaos | Stutter: plays the first beat of the fill, then repeats its first two steps, then hammers its first step. Adds gaps, extra hits, 2 to 4 hit ratchets and octave jumps on MIDI. |
+
+Each level is busier than the one before.
+
+- Your own Kick, Snare and Hihat 1 hits always play, except where Chaos drops one for a gap.
+- Muted tracks stay silent. With Flam on, the kick doesn't double.
+- Pitch changes are MIDI only. The trigger outs have no pitch.
+- With Fill mode off, the module plays exactly like the firmware it was built on.
 
 ## Linear
 
