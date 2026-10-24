@@ -48,11 +48,13 @@ Each alt table is held in the module's own row format, so you can hear it here a
 
 | Table | What it does | On a real module |
 |---|---|---|
-| HOPP | MPC / Linn 16th swing in whole ticks (55.6% to 71.4%) | Not yet |
-| DEEP | Two-level swing: the 8ths swing, then the 16ths inside them | Test builds 164 and 166 |
-| SQEZ | Made in the creator: starts like CLSTR, then the & and a squeeze up against the next downbeat | Test build 166 |
-| CLSTR | The e, & and a cluster mid-beat on a tuplet grid, leaning late as the level rises | Test build 165 |
-| FOLD | The e and a of every beat fold in toward the & | Test build 164 |
+| HOPP | MPC / Linn 16th swing in whole ticks (55.6% to 71.4%) | Tested |
+| DEEP | Two-level swing: the 8ths swing, then the 16ths inside them | Tested (test builds 164 and 166) |
+| SQEZ | Made in the creator: starts like CLSTR, then the & and a squeeze up against the next downbeat | Tested (test build 166) |
+| CLSTR | The e, & and a cluster mid-beat on a tuplet grid, leaning late as the level rises | Tested (test build 165) |
+| FOLD | The e and a of every beat fold in toward the & | Tested (test build 164) |
+
+All five alt tables have been tested on a real module and play as the page shows.
 
 Rules every table keeps: whole ticks, 16 to 36 ticks per beat in steps of 4 (so the Subdiv clock out stays even), every step at least 1 tick, and the half bar's 8 lengths adding up to 2N.
 
@@ -209,7 +211,7 @@ Every Timing made here keeps to the module's rules: whole ticks, 16 to 36 ticks 
 - Flam, Slop, Rolls and Linear, as described above.
 - Shuffle and Timing changes waiting for the next beat.
 
-**Confirmed on a real module:** test builds with DEEP, FOLD, CLSTR and SQEZ swapped into the Push and Clave tables played as the page shows, by ear. That also confirms the Push and Clave buttons play those two tables. Nothing has been measured with instruments.
+**Confirmed on a real module:** all five alt tables (HOPP, DEEP, SQEZ, CLSTR and FOLD) have been tested on a real module and play as the page shows, by ear. Test builds swapped them into the Push and Clave tables, which also confirms those two buttons play those tables. Nothing has been measured with instruments.
 
 **Matched, not traced or measured:**
 - Feel colours, from the manual.
