@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Stolperbeats Visualiser</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="64x64" href="assets/favicon-64.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="description" content="See and hear where the MSM Stolperbeats module's Timings put each hit, program its pattern banks, and make your own Timing tables for the STOLPERBEATS ULTRA flasher.">
 <script>try{ if(localStorage.getItem("stolperbeats-shuffle-map:theme")==="light") document.documentElement.setAttribute("data-theme","light"); }catch(e){}</script>
 <style>
 :root{
@@ -134,13 +138,23 @@ td.late{color:var(--late)} td.early{color:var(--early)}
 .tilerow.bypassed .bypass{opacity:1}
 .legend i.rolltick{width:3px;height:12px;border-radius:1px;background:var(--text);opacity:.6;vertical-align:-2px}
 
-/* theme switch */
-.topbar{display:flex;justify-content:flex-end;margin:-12px 0 14px}
-.theme{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:999px;padding:5px 6px 5px 12px;font:inherit;font-size:13px;cursor:pointer}
-.theme .track{position:relative;width:38px;height:22px;border-radius:999px;background:var(--chip);border:1px solid var(--line)}
-.theme .knobdot{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--text);transition:transform .25s ease}
-:root[data-theme="light"] .theme .knobdot{transform:translateX(16px)}
-.theme svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+/* byline and theme button, shared with the STOLPERBEATS ULTRA flasher */
+:root{--pink:#ff1fd6}
+.byline{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.coinlink{display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:var(--text);background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:4px 14px 4px 4px;font-size:14px;line-height:1.25}
+.coinlink:hover{border-color:var(--pink)}
+.coinlink b{font-weight:700}
+.coinlink small{display:block;white-space:nowrap;color:var(--muted);font-size:12.5px}
+.coin{display:block;width:40px;height:40px;perspective:220px;flex:0 0 auto}
+.coin-inner{display:block;position:relative;width:100%;height:100%;transform-style:preserve-3d;animation:coinspin 4s steps(24) infinite}
+.coinlink:hover .coin-inner{animation-duration:2s}
+.coin img{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.coin img{transform:translateZ(2.5px)}
+.coin .back{transform:rotateY(180deg) translateZ(2.5px)}
+.coin .edge{display:block;position:absolute;left:50%;top:8%;width:5px;height:84%;margin-left:-2.5px;background:linear-gradient(#9a9a9a,#6f6f6f 50%,#4a4a4a);transform:rotateY(90deg)}
+@keyframes coinspin{to{transform:rotateY(360deg)}}
+@media (prefers-reduced-motion:reduce){.coin-inner{animation:none}}
+.themebtn{margin-left:auto;background:var(--chip);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:7px 11px;font:600 13px/1.2 inherit;font-family:inherit;cursor:pointer}
 
 /* Hear straight: button eases to orange and breathes; the Shuffle control greys out over a soft orange glow */
 #ab{transition:background-color .9s ease,border-color .9s ease,color .9s ease}
@@ -193,11 +207,17 @@ td.late{color:var(--late)} td.early{color:var(--early)}
 }
 /* compact layout: Timings, Feels, the Swing knob and the grid on one screen; fixed heights so the grid never moves */
 main{padding-top:14px}
-.pagehead{display:grid;grid-template-columns:1fr auto;grid-template-areas:"title theme" "lede lede";align-items:center;gap:4px 16px;margin-bottom:10px}
-.pagehead h1{grid-area:title} .pagehead .theme{grid-area:theme} .pagehead .lede{grid-area:lede}
+.pagehead{display:flex;gap:18px;align-items:center;margin-bottom:20px}
+.pagehead .logo{flex:0 0 auto;width:56px;height:56px}
+.pagehead .headtext{flex:1 1 auto;min-width:0}
+.pagehead h1 .tool{color:var(--accent);letter-spacing:.04em}
+.byline .modesw{margin-left:auto}
+.byline .modesw+.themebtn{margin-left:0}
+.privacy{display:inline-flex;gap:8px;align-items:center;margin-top:10px;font-size:13px;color:var(--muted);background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:4px 12px}
+.privacy b{color:var(--text);font-weight:600}
 
-.pagehead h1{font-size:24px;margin:0}
-.pagehead .lede{margin:0;font-size:12.5px;line-height:1.45;max-width:none}
+.pagehead h1{font-size:30px;line-height:1.1;margin:0}
+.pagehead .lede{margin:4px 0 0;font-size:14.5px;line-height:1.5;max-width:none}
 .dl{margin-left:auto;border:1px solid var(--line);background:var(--chip);color:var(--text);border-radius:6px;padding:1px 9px;font:inherit;font-size:11px;letter-spacing:.04em;text-transform:none;cursor:pointer;line-height:1.5}
 .dl:hover:not(:disabled){border-color:var(--text)}
 .dl:disabled{opacity:.4;cursor:not-allowed}
@@ -309,9 +329,10 @@ main{padding-top:14px}
 .fwlink .sum-sub{color:var(--muted);font-size:13px}
 .fwlink .fwtext p{margin:4px 0 0;font-size:13px;color:var(--muted)}
 a.sbtn{text-decoration:none;display:inline-block}
+/* the logo and the title word turn teal in the creator */
+body.creating .pagehead .tool{color:var(--mine)}
+body.creating .pagehead .logo{--accent:var(--mine)}
 /* VISUALISER | CREATOR switch, and the timing creator, which takes the Timing row's place at the same size */
-.pagehead{grid-template-columns:1fr auto auto;grid-template-areas:"title mode theme" "lede lede lede"}
-.pagehead .modesw{grid-area:mode}
 .modesw button{font-size:11.5px;letter-spacing:.06em;padding:6px 12px}
 .modesw button[data-mode="1"][aria-pressed=true]{background:var(--mine);color:#06201e}
 :root{--mine:#2bb5ae;--amber:#e09a1c} :root[data-theme="dark"]{--mine:#3fd0c9;--amber:#ffb627}
@@ -345,7 +366,7 @@ a.dl{text-decoration:none;display:inline-block}
 #beat:focus-visible{outline:2px solid var(--mine);outline-offset:2px;border-radius:6px}
 #tbl tr.cur td{background:color-mix(in srgb,var(--mine) 12%,transparent)}
 #tbl td.lens{letter-spacing:.02em}
-@media (max-width:760px){ #creatorrow{height:auto} .crow{flex-wrap:wrap;height:auto} .pagehead{grid-template-areas:"title title theme" "mode mode mode" "lede lede lede"} }
+@media (max-width:760px){ #creatorrow{height:auto} .crow{flex-wrap:wrap;height:auto} .pagehead{flex-wrap:wrap;gap:12px 14px;align-items:flex-start} .pagehead .logo{width:44px;height:44px} .pagehead h1{font-size:24px} .pagehead .headtext{flex-basis:calc(100% - 60px)} .byline{flex-wrap:wrap} }
 @media (max-width:900px){
   .timings{grid-template-columns:1fr}
   .feels{grid-template-columns:repeat(4,1fr)}
@@ -358,14 +379,26 @@ a.dl{text-decoration:none;display:inline-block}
 </head>
 <body>
 <main>
-  <header class="pagehead">
-    <h1>Stolperbeats visualiser</h1>
-    <p class="lede">A visualiser and emulator of the MSM Stolperbeats module. See and hear exactly where its Timings put each hit, program its pattern banks, and try alt timing tables on your own module with the <a href="https://thisisbribery.github.io/stolperbeats-ultra-v1/" target="_blank" rel="noopener" style="color:inherit">STOLPERBEATS ULTRA flasher</a>. Unofficial, for educational purposes only.</p>
+  <div class="byline">
+    <a class="coinlink" href="https://www.instagram.com/thisisbribery/" target="_blank" rel="noopener">
+      <span class="coin" aria-hidden="true"><span class="coin-inner"><img src="assets/coin-front.png" alt=""><span class="edge"></span><img class="back" src="assets/coin-back.png" alt=""></span></span>
+      <span>Mods by <b>Bribery</b><small>@thisisbribery on Instagram &#8599;</small></span>
+    </a>
     <div class="seg modesw" id="modeSw" role="group" aria-label="Page mode"><button data-mode="0" aria-pressed="true">VISUALISER</button><button data-mode="1" aria-pressed="false" title="Make your own Timing table">CREATOR</button></div>
-    <button class="theme" id="theme" aria-label="Switch to light mode">
-      <span id="themeLabel">Dark</span>
-      <span class="track" aria-hidden="true"><span class="knobdot"></span></span>
-    </button>
+    <button class="themebtn" id="theme" type="button" aria-label="Switch to light mode">Theme</button>
+  </div>
+  <header class="pagehead">
+    <svg class="logo" viewBox="0 0 64 64" aria-hidden="true">
+      <rect x="4" y="4" width="56" height="56" rx="12" fill="var(--chip)" stroke="var(--accent)" stroke-width="3"/>
+      <g fill="var(--muted)" opacity=".7"><circle cx="14" cy="22" r="3"/><circle cx="23" cy="22" r="3"/><circle cx="32" cy="22" r="3"/><circle cx="41" cy="22" r="3"/><circle cx="50" cy="22" r="3"/></g>
+      <g fill="var(--accent)"><circle cx="14" cy="41" r="4.5"/><circle cx="27" cy="41" r="4.5" opacity=".75"/><circle cx="32" cy="41" r="4.5"/><circle cx="45" cy="41" r="4.5" opacity=".75"/><circle cx="50" cy="41" r="4.5"/></g>
+      <path d="M23.5 28 L26.5 35M41.5 28 L44.5 35" stroke="var(--text)" stroke-width="2" stroke-linecap="round" stroke-dasharray="1 3.2"/>
+    </svg>
+    <div class="headtext">
+      <h1>Stolperbeats <span class="tool">VISUALISER</span></h1>
+      <p class="lede">A visualiser and emulator of the MSM Stolperbeats module. See and hear exactly where its Timings put each hit, program its pattern banks, and try alt timing tables on your own module with the <a href="https://thisisbribery.github.io/stolperbeats-ultra-v1/" target="_blank" rel="noopener" style="color:inherit">STOLPERBEATS ULTRA flasher</a>.</p>
+      <div class="privacy">&#128274; <span><b>Runs entirely in your browser.</b> Unofficial, for educational purposes only.</span></div>
+    </div>
   </header>
 
   <section class="card panel" aria-label="Controls">
@@ -1155,7 +1188,6 @@ function drawFeels(){
 const themeBtn=document.getElementById("theme");
 function applyTheme(t){
   document.documentElement.setAttribute("data-theme",t);
-  document.getElementById("themeLabel").textContent=t==="dark"?"Dark":"Light";
   themeBtn.setAttribute("aria-label",t==="dark"?"Switch to light mode":"Switch to dark mode");
 }
 applyTheme(document.documentElement.getAttribute("data-theme")==="light"?"light":"dark");
