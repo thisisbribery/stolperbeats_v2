@@ -2,6 +2,8 @@
 
 A visualiser and emulator of the MSM Stolperbeats eurorack module. See and hear exactly where its Timings put each hit, program its pattern banks, and try alt timing tables on your own module with the [STOLPERBEATS ULTRA flasher](https://www.thisisbribery.com/stolperbeats/). Unofficial, for educational purposes only. See the [disclaimer](#disclaimer).
 
+**Support:** find it useful? [Buy me a coffee on Ko-fi](https://ko-fi.com/thisisbribery).
+
 v2 is focused on the module only. The earlier page, with Deluge styles and proposed extras, stays at [stolperbeats_v1](https://github.com/thisisbribery/stolperbeats_v1).
 
 ## Using it
