@@ -244,6 +244,20 @@ Every Timing made here keeps to the module's rules: whole ticks, 16 to 36 ticks 
 - How the Feels appear on MIDI out.
 - The preset beats are examples, not the module's pattern banks, and the kits are approximations.
 
+## Licence
+
+Required Notice: Copyright 2026 Bribery (https://thisisbribery.com)
+
+The Stolperbeats visualiser is licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE.md), plus two additional permissions. Full terms are in [LICENSE.md](LICENSE.md).
+
+- **Free for noncommercial use.** Use it, study it, change it and share it.
+- **Forks are welcome** on the same noncommercial terms. Keep the `Required Notice:` line, include or link the licence, and credit Bribery's Stolperbeats tools.
+- **Make and sell music with it**, including paid gigs, sessions and releases.
+- **Don't sell it.** No selling the tool, the tables, changed versions or paid packs that include them without written permission.
+- **Making Sound Machines** may use it commercially, for example in official Stolperbeats firmware.
+
+The licence covers Bribery's own work only. Making Sound Machines' firmware and factory timings (Trip, Shake, Push, Clave) stay theirs. For any other commercial use, contact Bribery through [thisisbribery.com](https://thisisbribery.com).
+
 ## Disclaimer
 
 This is an unofficial, independent project made for education. It is not affiliated with, endorsed by, or supported by Making Sound Machines.
