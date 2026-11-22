@@ -41,9 +41,6 @@ p{margin:0 0 12px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:20px}
 
 /* module-style control panel */
-.panel{display:grid;grid-template-columns:1fr 1fr;grid-template-areas:"timing feel" "timing readout";gap:18px 32px;align-items:center}
-body.creating .panel{grid-template-areas:"feel readout"}
-#timingrow{grid-area:timing;align-self:start} #feelrow{grid-area:feel} .readout{grid-area:readout}
 .ctl-label{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
 .knob input{width:100%;margin:0;-webkit-appearance:none;appearance:none;background:transparent;height:28px;cursor:pointer}
 .knob input::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:var(--track)}
@@ -130,13 +127,13 @@ td.late{color:var(--late)} td.early{color:var(--early)}
 .tile{border-radius:3px;padding:6px 12px;letter-spacing:.08em;width:auto}
 .linear-desc{font-size:12.5px;line-height:1.35;color:var(--muted);margin:0;max-width:340px;min-height:2.7em}
 .lampbtn:hover{background:color-mix(in srgb,var(--lamp) 26%,var(--chip))}
-.lampbtn[aria-pressed=true]{color:#141414;border-color:color-mix(in srgb,var(--lamp) 70%,#000);
+.lampbtn[aria-pressed=true],.lampbtn.on{color:#141414;border-color:color-mix(in srgb,var(--lamp) 70%,#000);
   background:radial-gradient(ellipse at 50% 40%,color-mix(in srgb,var(--lamp) 45%,#fff) 0%,var(--lamp) 60%,color-mix(in srgb,var(--lamp) 82%,#000) 100%);
   box-shadow:0 0 16px 1px color-mix(in srgb,var(--lamp) 55%,transparent),inset 0 0 10px rgba(255,255,255,.35)}
 .row-desc{margin:7px 0 0;font-size:12.5px;line-height:1.35;color:var(--muted);height:1.35em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tilerow .ctl-label{display:flex;gap:8px}
 .tilerow .bypass{margin-left:0}
-.tilerow.bypassed .feels,.tilerow.bypassed .timings{filter:grayscale(1);opacity:.4;transition:filter .9s ease,opacity .9s ease}
+.tilerow.bypassed .feels,.tilerow.bypassed .timings,.tilerow.bypassed .feeldrop summary{filter:grayscale(1);opacity:.4;transition:filter .9s ease,opacity .9s ease}
 /* Timing: Stolperbeats' four buttons, then the alt tables, each group captioned like a panel silkscreen */
 .timings{display:grid;grid-template-columns:1fr;gap:8px}
 .tgroup{min-width:0}
@@ -199,8 +196,6 @@ td.late{color:var(--late)} td.early{color:var(--early)}
 @media (max-width:760px){
   #timing .lampbtn{letter-spacing:.03em}
   .morebtn .caret{display:none}
-  .panel{grid-template-columns:1fr;grid-template-areas:"timing" "feel" "readout"}
-  body.creating .panel{grid-template-areas:"feel" "readout"}
   .row-desc{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;height:2.7em}
   .readout{gap:12px 16px}
   .ro-desc .ro-v{-webkit-line-clamp:3;height:4.2em}
@@ -229,9 +224,7 @@ main{padding-top:14px}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .barhead h2{font-size:15px}
 .card{padding:14px 16px;margin-bottom:10px}
-.panel{grid-template-columns:1.45fr 1fr;gap:10px 24px}
 .ctl-label{margin-bottom:6px}
-.timings{grid-template-columns:4fr 5fr;gap:6px 12px}
 .tbtns,.feels{gap:6px}
 .feels{grid-template-columns:repeat(4,1fr)}
 .lampbtn{font-size:11px;letter-spacing:.08em;padding:6px 2px}
@@ -295,13 +288,33 @@ main{padding-top:14px}
 .loopsel{min-width:210px;height:40px;font:inherit;font-size:15px;font-weight:600;background:var(--chip);color:var(--text);border:2px solid var(--accent);border-radius:8px;padding:0 10px;cursor:pointer}
 .pickers .mine{height:40px}
 .kitpick{margin-left:auto}
+/* Timing: the module's four on top, the alt tables below, the last slot a menu for the rest and your own */
+#timingrow{flex:0 1 360px;min-width:280px}
+.pickers .tilerow{align-self:auto}
+.pickers .tilerow .pick-label{display:flex;align-items:center;gap:8px}
+.timings{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.timings .lampbtn{height:28px;padding:0 2px}
+.timings .alt{--lamp:#45c472} .timings .mine{--lamp:var(--mine)}
+.tmore{appearance:none;-webkit-appearance:none;text-align:center;text-align-last:center;
+  background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);
+  background-position:calc(100% - 11px) 50%,calc(100% - 7px) 50%;background-size:4px 4px;background-repeat:no-repeat;padding-right:14px!important}
+.tmore option,.tmore optgroup{background:var(--panel);color:var(--text);font-weight:600}
+/* Feel: a menu whose closed face is the lit Feel tab; open it for the four tabs and the Timing readout */
+.feelpick{position:relative}
+.feeldrop>summary{list-style:none;display:flex;align-items:center;gap:6px;cursor:pointer}
+.feeldrop>summary::-webkit-details-marker{display:none}
+.feeldrop #feelNow{width:auto;min-width:110px;height:40px;display:inline-flex;align-items:center;justify-content:center;padding:0 14px}
+.feeldrop .caret{width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg) translateY(-3px);transition:transform .2s ease}
+.feeldrop[open] .caret{transform:rotate(225deg) translate(-2px,-2px)}
+.feelpop{position:absolute;z-index:30;top:calc(100% + 8px);right:0;width:min(560px,calc(100vw - 32px));background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;box-shadow:0 14px 40px rgba(0,0,0,.45)}
+.feelpop .row-desc{margin:7px 0 12px}
 .kits{border:2px solid var(--accent)}
 .kits button{min-width:64px;height:36px;font-size:16px;font-weight:800;color:var(--accent)}
 .kits button[aria-pressed=true]{background:var(--accent);color:#fff}
 .btab.addbar{border-style:dashed;opacity:.55}
 .btab.addbar svg{display:none}
 .btab.addbar:hover{opacity:1}
-@media (max-width:760px){ .kitpick{margin-left:0} .loopsel{min-width:0;width:100%} .pick:first-child{flex:1 1 100%} }
+@media (max-width:760px){ .kitpick{margin-left:0} .loopsel{min-width:0;width:100%} .pick:first-child,#timingrow{flex:1 1 100%} .feelpick{position:static} .feelpop{position:static;width:auto;margin-top:8px} }
 .slotbar[hidden],.trows[hidden],.bankrow[hidden]{display:none}
 .encw{display:flex;align-items:center;gap:5px}
 .encw .kitlabel{font-size:12px;color:var(--muted);font-weight:600}
@@ -391,11 +404,9 @@ a.dl{text-decoration:none;display:inline-block}
 #tbl td.lens{letter-spacing:.02em}
 @media (max-width:760px){ .crow{flex-wrap:wrap;height:auto} .pagehead{flex-wrap:wrap;gap:12px 14px;align-items:flex-start} .pagehead .logo{width:44px;height:44px} .pagehead h1{font-size:24px} .pagehead .headtext{flex-basis:calc(100% - 60px)} .byline{flex-wrap:wrap} }
 @media (max-width:900px){
-  .timings{grid-template-columns:1fr}
   .feels{grid-template-columns:repeat(4,1fr)}
 }
 @media (max-width:760px){
-  .panel{grid-template-columns:1fr}
   .barctl{margin-left:0}
 }
 </style>
@@ -424,25 +435,6 @@ a.dl{text-decoration:none;display:inline-block}
     </div>
   </header>
 
-  <section class="card panel" aria-label="Controls">
-    <div class="tilerow" id="timingrow">
-      <div class="ctl-label">Timing<span class="bypass" aria-hidden="true">· STRAIGHT</span><button class="dl" id="dlTables">Download tables</button></div>
-      <div class="timings" id="timing" role="group" aria-label="Timing"></div>
-      <p class="row-desc" id="timingDesc"></p>
-    </div>
-    <div class="tilerow" id="feelrow">
-      <div class="ctl-label">Feel<span class="bypass" aria-hidden="true">· STRAIGHT</span></div>
-      <div class="feels" id="feels" role="group" aria-label="Feel"></div>
-      <p class="row-desc" id="feelDesc"></p>
-    </div>
-    <div class="readout" aria-live="polite">
-      <div><span class="ro-k">Timing</span><span class="ro-v" id="roMode"></span></div>
-      <div class="ro-desc"><span class="ro-k">What it does</span><span class="ro-v" id="roDesc"></span></div>
-      <div><span class="ro-k">Resolution</span><span class="ro-v mono" id="roRes"></span></div>
-      <div><span class="ro-k">Largest shift</span><span class="ro-v mono" id="roMax"></span></div>
-    </div>
-  </section>
-
   <section class="card">
     <div class="barhead"><h2 id="barTitle">Bar 1 of 4</h2><span class="status" id="status"></span>
       <div class="barctl">
@@ -454,6 +446,26 @@ a.dl{text-decoration:none;display:inline-block}
     <div class="pickers">
       <label class="pick"><span class="pick-label">Drum loops</span><select class="loopsel" id="loopSel"></select></label>
       <button class="mine" id="mine" type="button" aria-pressed="false" title="Clears the grid so you can draw your own">Make your own beat</button>
+      <div class="pick tilerow" id="timingrow">
+        <span class="pick-label">Timing<span class="bypass" aria-hidden="true">· STRAIGHT</span><button class="dl" id="dlTables">Download tables</button></span>
+        <div class="timings" id="timing" role="group" aria-label="Timing: the module's four, then the alt tables"></div>
+      </div>
+      <div class="pick tilerow feelpick" id="feelrow">
+        <span class="pick-label">Feel<span class="bypass" aria-hidden="true">· STRAIGHT</span></span>
+        <details class="feeldrop" id="feelDrop">
+          <summary title="Pick a Feel, and see what the Timing is doing"><span class="lampbtn on" id="feelNow"></span><span class="caret" aria-hidden="true"></span></summary>
+          <div class="feelpop">
+            <div class="feels" id="feels" role="group" aria-label="Feel"></div>
+            <p class="row-desc" id="feelDesc"></p>
+            <div class="readout" aria-live="polite">
+              <div><span class="ro-k">Timing</span><span class="ro-v" id="roMode"></span></div>
+              <div class="ro-desc"><span class="ro-k">What it does</span><span class="ro-v" id="roDesc"></span></div>
+              <div><span class="ro-k">Resolution</span><span class="ro-v mono" id="roRes"></span></div>
+              <div><span class="ro-k">Largest shift</span><span class="ro-v mono" id="roMax"></span></div>
+            </div>
+          </div>
+        </details>
+      </div>
       <div class="pick kitpick"><span class="pick-label">Choose your kit</span><div class="seg kits" id="kits" role="group" aria-label="Choose your kit"></div></div>
     </div>
     <div class="modstrip" id="modStrip" hidden></div>
@@ -1155,31 +1167,41 @@ function readout(){
 function update(){
   shuffleIn.value=state.shuffle;
   document.getElementById("knobName").textContent=state.creator?"Shuffle level":"Shuffle";
-  document.getElementById("timingDesc").textContent=TIMINGS.find(t=>t.key===state.timing).desc;
   document.getElementById("shufv").textContent=state.shuffle;
   document.querySelectorAll("#detents button").forEach((d,i)=>{ d.classList.toggle("on",i===state.shuffle); d.setAttribute("aria-pressed",String(i===state.shuffle)); });
   document.querySelectorAll("#timing [data-timing]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.timing===state.timing)));
+  drawMore();
   drawDl();
   if(state.creator) drawCreator();
   drawFeels(); drawSlots(); retarget(); drawHalf(); readout();
 }
 
 // ---------- controls ----------
-// Two groups, captioned like panel silkscreen: the module's four Timing buttons, then the alt tables (and yours).
-const tWrap=document.getElementById("timing"), tGroups={};
-for(const [g,cap] of [["stolper","Stolperbeats"],["alt","Alt tables · try them, then flash them with ULTRA"]]){
-  const grp=document.createElement("div"); grp.className="tgroup "+g;
-  grp.innerHTML=`<div class="tbtns"></div><span class="tcap">${cap}</span>`;
-  tWrap.appendChild(grp); tGroups[g]=grp;
+// Two rows of four: the module's four Timings, then the alt tables. The last slot is a menu holding the rest
+// of the alt tables and your own Timings from the creator.
+const tWrap=document.getElementById("timing"), IN_MORE=new Set(["CLSTR","FOLD"]);
+const tMore=document.createElement("select"); tMore.className="lampbtn tmore alt"; tMore.setAttribute("aria-label","More timings: the other alt tables and your own");
+tMore.innerHTML='<option value="" hidden>MORE</option><optgroup label="Alt tables"></optgroup><optgroup label="Yours" hidden></optgroup>';
+const [moreAlt,moreMine]=tMore.querySelectorAll("optgroup");
+tMore.addEventListener("change",()=>{ if(tMore.value){ state.timing=tMore.value; update(); } });
+function addTimingButton(t){
+  if(t.mine||IN_MORE.has(t.key)){
+    const o=document.createElement("option"); o.value=t.key; o.textContent=t.key.toUpperCase(); o.title=t.desc;
+    (t.mine?moreMine:moreAlt).appendChild(o); moreMine.hidden=!moreMine.children.length; return o;
+  }
+  const b=document.createElement("button"); b.className="lampbtn"+(t.alt?" alt":""); b.dataset.timing=t.key; b.setAttribute("aria-pressed","false"); b.title=t.desc; b.textContent=t.key.toUpperCase();
+  b.addEventListener("click",()=>{ state.timing=t.key; update(); });
+  tWrap.appendChild(b); return b;
 }
-function addTimingButton(t,lamp){
-  const item=document.createElement("div"); item.className="feel-item";
-  item.innerHTML=`<button class="lampbtn" data-timing="${t.key}" aria-pressed="false" title="${t.desc}"${lamp?` style="--lamp:${lamp}"`:""}>${t.key.toUpperCase()}</button>`;
-  item.querySelector("button").addEventListener("click",()=>{ state.timing=t.key; update(); });
-  tGroups[t.alt||t.mine?"alt":"stolper"].querySelector(".tbtns").appendChild(item);
-  return item;
+function removeTimingButton(key){ tMore.querySelector(`option[value="${key}"]`)?.remove(); moreMine.hidden=!moreMine.children.length; }
+for(const t of TIMINGS) addTimingButton(t);
+tWrap.appendChild(tMore);
+function drawMore(){
+  const inMore=!!tMore.querySelector(`option[value="${state.timing}"]`);
+  tMore.value=inMore?state.timing:""; tMore.classList.toggle("on",inMore);
+  tMore.classList.toggle("mine",inMore&&isMine(state.timing)); tMore.classList.toggle("alt",!(inMore&&isMine(state.timing)));
+  tMore.title=inMore?TIMINGS.find(x=>x.key===state.timing).desc:"More timings: the other alt tables and your own";
 }
-for(const t of TIMINGS) addTimingButton(t,t.alt?"#45c472":"");
 // Download tables covers the selected alt table only, not the four factory Timings.
 function drawDl(){
   const b=document.getElementById("dlTables"), ok=isAlt(state.timing);
@@ -1197,17 +1219,21 @@ document.getElementById("ab").addEventListener("click",e=>{
   shuffleIn.setAttribute("aria-description",state.straight?"Bypassed: playing straight 16ths":"");
   retarget();
 });
-const fWrap=document.getElementById("feels");
+const fWrap=document.getElementById("feels"), feelDrop=document.getElementById("feelDrop"), feelNow=document.getElementById("feelNow");
+document.addEventListener("click",e=>{ if(feelDrop.open&&!feelDrop.contains(e.target)) feelDrop.open=false; });
+feelDrop.addEventListener("keydown",e=>{ if(e.key==="Escape"&&feelDrop.open){ feelDrop.open=false; feelDrop.querySelector("summary").focus(); } });
 FEELS.forEach((f,i)=>{
   const item=document.createElement("div"); item.className="feel-item";
   item.innerHTML=`<button class="lampbtn" style="--lamp:${f.lamp}" aria-pressed="false" title="${f.desc}">${f.key.toUpperCase()}</button>`;
-  item.querySelector("button").addEventListener("click",()=>{ state.feel=i; drawFeels(); retarget(); drawHalf(); });
+  item.querySelector("button").addEventListener("click",()=>{ state.feel=i; drawFeels(); retarget(); drawHalf(); feelDrop.open=false; });
   fWrap.appendChild(item);
 });
 function drawFeels(){
   document.getElementById("feelDesc").textContent=FEELS[state.feel].desc;
   fWrap.querySelectorAll(".lampbtn").forEach((b,i)=>b.setAttribute("aria-pressed",String(i===state.feel)));
-  tGroups.stolper.style.setProperty("--lamp",FEELS[state.feel].lamp);
+  tWrap.style.setProperty("--lamp",FEELS[state.feel].lamp);
+  feelNow.textContent=FEELS[state.feel].key.toUpperCase(); feelNow.style.setProperty("--lamp",FEELS[state.feel].lamp);
+  feelNow.parentElement.title=`Feel: ${FEELS[state.feel].key}. ${FEELS[state.feel].desc} Open to change it and see what the Timing is doing.`;
 }
 const themeBtn=document.getElementById("theme");
 function applyTheme(t){
@@ -2053,7 +2079,7 @@ function registerMine(t){
   if(!info){ info={key:t.key,mine:true}; TIMINGS.push(info); }
   info.blurb="your own, from the creator"; info.desc=`${t.key}: your own Timing, made in the creator. Module rows only.`;
   MODULE[t.key]=t.levels.map(L=>[L.N,L.pos.slice()]);
-  if(!tGroups.alt.querySelector(`[data-timing="${t.key}"]`)) addTimingButton(info,"var(--mine)");
+  if(!tMore.querySelector(`option[value="${t.key}"]`)) addTimingButton(info);
 }
 loadMine().forEach(registerMine);
 document.getElementById("cSave").addEventListener("click",()=>{
@@ -2072,7 +2098,7 @@ document.getElementById("cDelete").addEventListener("click",()=>{
   if(!window.confirm(`Delete ${nm} from this browser? Your draft stays as it is.`)) return;
   storeMine(loadMine().filter(x=>x.key!==nm));
   TIMINGS.splice(TIMINGS.findIndex(x=>x.key===nm),1); delete MODULE[nm];
-  tGroups.alt.querySelector(`[data-timing="${nm}"]`)?.parentElement.remove();
+  removeTimingButton(nm);
   if(prevTiming===nm) prevTiming="Trip"; if(savedHere===nm) savedHere=null; if(draft.from===nm) draft.from="";
   saveDraft(); buildFrom(); flash(`Deleted ${nm}.`); drawCreator();
 });
