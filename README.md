@@ -254,7 +254,7 @@ The Stolperbeats visualiser is licensed under the [PolyForm Noncommercial Licens
 - **Forks are welcome** on the same noncommercial terms. Keep the `Required Notice:` line, include or link the licence, and credit Bribery's Stolperbeats tools.
 - **Make and sell music with it**, including paid gigs, sessions and releases.
 - **Don't sell it.** No selling the tool, the tables, changed versions or paid packs that include them without written permission.
-- **Making Sound Machines** may use it commercially, for example in official Stolperbeats firmware.
+- **Making Sound Machines** may use it commercially for free with visible credit to Bribery, for example in official Stolperbeats firmware. Anything beyond that needs a written agreement with Bribery.
 
 The licence covers Bribery's own work only. Making Sound Machines' firmware and factory timings (Trip, Shake, Push, Clave) stay theirs. For any other commercial use, contact Bribery through [thisisbribery.com](https://thisisbribery.com).
 
