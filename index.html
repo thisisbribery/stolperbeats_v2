@@ -41,19 +41,28 @@ p{margin:0 0 12px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:20px}
 
 /* module-style control panel */
-.panel{display:grid;grid-template-columns:1fr 1fr;grid-template-areas:"timing feel" "knob side" "readout readout";gap:18px 32px;align-items:center}
-#timingrow{grid-area:timing} #feelrow{grid-area:feel} .knob{grid-area:knob} .side{grid-area:side} .readout{grid-area:readout}
+.panel{display:grid;grid-template-columns:1fr 1fr;grid-template-areas:"timing feel" "timing readout";gap:18px 32px;align-items:center}
+body.creating .panel{grid-template-areas:"feel readout"}
+#timingrow{grid-area:timing;align-self:start} #feelrow{grid-area:feel} .readout{grid-area:readout}
 .ctl-label{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
-.knob{min-width:220px}
 .knob input{width:100%;margin:0;-webkit-appearance:none;appearance:none;background:transparent;height:28px;cursor:pointer}
 .knob input::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:var(--track)}
 .knob input::-moz-range-track{height:6px;border-radius:3px;background:var(--track)}
 .knob input::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--accent);border:3px solid var(--panel);box-shadow:0 0 0 1px var(--accent);margin-top:-8px}
 .knob input::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--accent);border:3px solid var(--panel);box-shadow:0 0 0 1px var(--accent)}
-.detents{display:flex;justify-content:space-between;padding:0 3px;margin-top:2px}
-.detents span{width:16px;display:flex;justify-content:center;white-space:nowrap;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;cursor:pointer}
-.detents span.on{color:var(--accent);font-weight:700}
-.side{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+/* Shuffle: big 0-6 buttons on the transport row, right above the grid (the range input stays for the code, hidden) */
+.knob{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap}
+.knob .ctl-label{margin:0;font-size:13px;font-weight:800;letter-spacing:.08em;color:var(--accent)}
+.knob .ctl-label .bypass{position:absolute;left:0;top:100%;margin-top:2px;font-size:10.5px;white-space:nowrap}
+#shuffle,#shufv{display:none}
+.detents{display:inline-flex;border:2px solid var(--accent)}
+.detents button{min-width:42px;height:40px;padding:0 10px;font-size:17px;font-weight:800;color:var(--accent)}
+.detents button+button{border-left:1px solid color-mix(in srgb,var(--accent) 40%,var(--line))}
+.detents button:hover{background:color-mix(in srgb,var(--accent) 14%,transparent)}
+.knob .detents button[aria-pressed=true]{background:var(--accent);color:#fff}
+.tplay{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap}
+/* transport: sits on the grid's tool row, right above the grid */
+.transport{flex:1 1 100%;display:flex;align-items:center;justify-content:space-between;gap:12px 24px;flex-wrap:wrap;margin:6px 0 2px}
 .tempo{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted)}
 .tempo input{width:130px;accent-color:var(--accent)}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -67,7 +76,8 @@ p{margin:0 0 12px}
 .kitlabel{font-size:14px;color:var(--text);font-weight:600}
 
 /* readout: fixed geometry so switching Timing never moves the grid */
-.readout{grid-column:1/-1;display:grid;grid-template-columns:190px 1fr 120px 120px;gap:18px;border-top:1px solid var(--line);padding-top:14px}
+.readout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1fr);gap:8px 18px;align-self:start}
+.ro-desc{grid-column:1/-1;grid-row:2}
 .ro-k{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
 .ro-v{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;line-height:1.4;height:2.8em;font-size:14px}
 .ro-v .sub{color:var(--muted)}
@@ -184,20 +194,15 @@ td.late{color:var(--late)} td.early{color:var(--early)}
 .about-body b{color:var(--text)}
 .disclaimer{grid-column:1/-1;margin:4px 0 0;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
 
-@media (max-width:960px){
-  .readout{grid-template-columns:170px 1fr 110px 110px}
-}
 @media (max-width:900px){
 }
 @media (max-width:760px){
   #timing .lampbtn{letter-spacing:.03em}
   .morebtn .caret{display:none}
-  .panel{grid-template-columns:1fr;grid-template-areas:"timing" "feel" "knob" "side" "readout"}
-  .side{flex-direction:row;flex-wrap:wrap;align-items:center;gap:12px 16px}
+  .panel{grid-template-columns:1fr;grid-template-areas:"timing" "feel" "readout"}
+  body.creating .panel{grid-template-areas:"feel" "readout"}
   .row-desc{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;height:2.7em}
-  .knob{min-width:0}
-  .readout{grid-template-columns:1fr 1fr;gap:12px 16px}
-  .ro-desc{grid-column:1/-1}
+  .readout{gap:12px 16px}
   .ro-desc .ro-v{-webkit-line-clamp:3;height:4.2em}
   .prov{grid-template-columns:1fr}
   h1{font-size:25px}
@@ -232,9 +237,7 @@ main{padding-top:14px}
 .lampbtn{font-size:11px;letter-spacing:.08em;padding:6px 2px}
 .tcap{margin-top:4px}
 .row-desc{margin-top:5px}
-.knob input{height:24px}
-.side{gap:8px}
-.readout{padding-top:10px;gap:14px}
+.readout{gap:6px 14px}
 .barhead{flex-wrap:wrap;margin-bottom:4px;row-gap:6px}
 .barctl{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .barctl .kitlabel{font-size:12px;color:var(--muted);font-weight:600;margin-left:6px}
@@ -285,6 +288,20 @@ main{padding-top:14px}
 .modstrip{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:2px 0 8px;min-height:34px}
 .modstrip[hidden]{display:none}
 .pickers[hidden]{display:none}
+/* Drum loops, Make your own beat, Choose your kit: one row above the bar tabs */
+.pickers{display:flex;align-items:flex-end;gap:10px 22px;flex-wrap:wrap;margin:6px 0 12px}
+.pick{display:flex;flex-direction:column;gap:4px}
+.pick-label{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.loopsel{min-width:210px;height:40px;font:inherit;font-size:15px;font-weight:600;background:var(--chip);color:var(--text);border:2px solid var(--accent);border-radius:8px;padding:0 10px;cursor:pointer}
+.pickers .mine{height:40px}
+.kitpick{margin-left:auto}
+.kits{border:2px solid var(--accent)}
+.kits button{min-width:64px;height:36px;font-size:16px;font-weight:800;color:var(--accent)}
+.kits button[aria-pressed=true]{background:var(--accent);color:#fff}
+.btab.addbar{border-style:dashed;opacity:.55}
+.btab.addbar svg{display:none}
+.btab.addbar:hover{opacity:1}
+@media (max-width:760px){ .kitpick{margin-left:0} .loopsel{min-width:0;width:100%} .pick:first-child{flex:1 1 100%} }
 .slotbar[hidden],.trows[hidden],.bankrow[hidden]{display:none}
 .encw{display:flex;align-items:center;gap:5px}
 .encw .kitlabel{font-size:12px;color:var(--muted);font-weight:600}
@@ -332,7 +349,7 @@ a.sbtn{text-decoration:none;display:inline-block}
 /* the logo and the title word turn teal in the creator */
 body.creating .pagehead .tool{color:var(--mine)}
 body.creating .pagehead .logo{--accent:var(--mine)}
-/* VISUALISER | CREATOR switch, and the timing creator, which takes the Timing row's place at the same size */
+/* VISUALISER | CREATOR switch. In the creator the half-bar card becomes the Timing creator and moves to just above the grid */
 .modesw button{font-size:11.5px;letter-spacing:.06em;padding:6px 12px}
 .modesw button[data-mode="1"][aria-pressed=true]{background:var(--mine);color:#06201e}
 :root{--mine:#2bb5ae;--amber:#e09a1c} :root[data-theme="dark"]{--mine:#3fd0c9;--amber:#ffb627}
@@ -343,10 +360,17 @@ body.creating .pagehead .logo{--accent:var(--mine)}
   transition:border-color .4s ease,box-shadow .4s ease}
 body.creating #halfCard{--hl:var(--mine)}
 .halfhead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
-.halfsub{font-size:13px;font-weight:600;color:var(--mine)}
-body:not(.creating) .halfsub{display:none}
-#creatorrow{grid-area:timing;height:133px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.halfhead h2{flex:0 1 100%}
+.halfsub{font-size:15px;font-weight:600;color:var(--mine);margin:2px 0 0}
+body:not(.creating) .halfsub,body:not(.creating) .clevels{display:none}
+.clevels{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;margin:0 0 8px}
+.clevels .seg button{min-width:38px;font-size:13px;padding:5px 10px}
+.clevels .seg button[aria-pressed=true]{background:var(--mine);color:#06201e}
+.clevels .clinfo{font-size:12.5px;color:var(--muted)}
+#creatorrow{display:flex;flex-direction:column;gap:6px;min-width:0;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
 body:not(.creating) #creatorrow,body.creating #timingrow{display:none}
+.tblwrap>summary{cursor:pointer;font-size:12px;color:var(--muted);margin-top:8px}
+body:not(.creating) .tblwrap>summary{display:none}
 #creatorrow .ctl-label{display:flex;align-items:center;gap:6px;margin-bottom:0;color:var(--mine);font-weight:700}
 .cacts{margin-left:auto;display:flex;align-items:center;gap:6px}
 .cacts .dl{margin-left:0}
@@ -360,13 +384,12 @@ a.dl{text-decoration:none;display:inline-block}
 .csel{background:var(--chip);color:var(--text);border:1px solid var(--line);border-radius:6px;font:inherit;font-size:12px;padding:2px 4px;height:24px}
 .cbadge{margin-left:auto;font-size:11px;font-weight:700;letter-spacing:.05em;border:1px solid var(--ok);color:var(--ok);border-radius:999px;padding:1px 9px;white-space:nowrap}
 .cbadge.warn{border-color:var(--warn);color:var(--warn)}
-#cMsg{margin-top:auto}
 #cMsg.flash{color:var(--mine)} #cMsg.bad{color:var(--late)}
 #beat.editing{touch-action:none;user-select:none;-webkit-user-select:none}
 #beat:focus-visible{outline:2px solid var(--mine);outline-offset:2px;border-radius:6px}
 #tbl tr.cur td{background:color-mix(in srgb,var(--mine) 12%,transparent)}
 #tbl td.lens{letter-spacing:.02em}
-@media (max-width:760px){ #creatorrow{height:auto} .crow{flex-wrap:wrap;height:auto} .pagehead{flex-wrap:wrap;gap:12px 14px;align-items:flex-start} .pagehead .logo{width:44px;height:44px} .pagehead h1{font-size:24px} .pagehead .headtext{flex-basis:calc(100% - 60px)} .byline{flex-wrap:wrap} }
+@media (max-width:760px){ .crow{flex-wrap:wrap;height:auto} .pagehead{flex-wrap:wrap;gap:12px 14px;align-items:flex-start} .pagehead .logo{width:44px;height:44px} .pagehead h1{font-size:24px} .pagehead .headtext{flex-basis:calc(100% - 60px)} .byline{flex-wrap:wrap} }
 @media (max-width:900px){
   .timings{grid-template-columns:1fr}
   .feels{grid-template-columns:repeat(4,1fr)}
@@ -407,8 +430,116 @@ a.dl{text-decoration:none;display:inline-block}
       <div class="timings" id="timing" role="group" aria-label="Timing"></div>
       <p class="row-desc" id="timingDesc"></p>
     </div>
+    <div class="tilerow" id="feelrow">
+      <div class="ctl-label">Feel<span class="bypass" aria-hidden="true">· STRAIGHT</span></div>
+      <div class="feels" id="feels" role="group" aria-label="Feel"></div>
+      <p class="row-desc" id="feelDesc"></p>
+    </div>
+    <div class="readout" aria-live="polite">
+      <div><span class="ro-k">Timing</span><span class="ro-v" id="roMode"></span></div>
+      <div class="ro-desc"><span class="ro-k">What it does</span><span class="ro-v" id="roDesc"></span></div>
+      <div><span class="ro-k">Resolution</span><span class="ro-v mono" id="roRes"></span></div>
+      <div><span class="ro-k">Largest shift</span><span class="ro-v mono" id="roMax"></span></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="barhead"><h2 id="barTitle">Bar 1 of 4</h2><span class="status" id="status"></span>
+      <div class="barctl">
+        <button class="dl" id="dlMidi" title="Download the loop as a MIDI file: what plays, with the Timing, Shuffle, Feel, Rolls, and step ratchets and pitch. Muted tracks and hits Linear silences are left out.">Download MIDI</button>
+        <span class="kitlabel">Linear</span><div class="tiles" id="linear" role="group" aria-label="Linear"></div>
+      </div>
+    </div>
+    <p class="linear-desc" id="linearDesc" hidden></p>
+    <div class="pickers">
+      <label class="pick"><span class="pick-label">Drum loops</span><select class="loopsel" id="loopSel"></select></label>
+      <button class="mine" id="mine" type="button" aria-pressed="false" title="Clears the grid so you can draw your own">Make your own beat</button>
+      <div class="pick kitpick"><span class="pick-label">Choose your kit</span><div class="seg kits" id="kits" role="group" aria-label="Choose your kit"></div></div>
+    </div>
+    <div class="modstrip" id="modStrip" hidden></div>
+    <div class="barsel">
+      <span class="kitlabel">Bar</span>
+      <div class="bartabs" id="barTabs" role="group" aria-label="Bar shown on the grid"></div>
+      <label class="follow" title="While playing, the grid shows the bar that's playing. Pick a bar to stop following and edit it while the loop runs."><input type="checkbox" id="follow" checked> Follow</label>
+      <button class="dl" id="copyBar" title="Copy this bar's Kick and Snare to the other three bars">Copy to all bars</button>
+      <button class="dl" id="rmBar" type="button" hidden>Remove bar</button>
+      <span class="barnote">Click + to add a bar, up to 4. Kick and Snare change per bar; Hats and Percs loop 1 bar under them.</span>
+    </div>
+    <div class="steptools">
+      <span class="kitlabel">Draw</span>
+      <div class="seg" id="toolSeg" role="group" aria-label="What a click on the grid edits"><button data-tool="hits" aria-pressed="true">HITS</button><button data-tool="ratchet" aria-pressed="false">RATCHET</button><button data-tool="pitch" aria-pressed="false">PITCH</button></div>
+      <span class="exptag" title="Ratchets and pitch are not on the module. They model a proposed firmware mod.">Experimental</span>
+      <span class="toolnote" id="toolNote"></span>
+      <div class="transport" role="group" aria-label="Shuffle and transport">
+        <div class="knob" id="knob">
+          <div class="ctl-label"><span id="knobName">Shuffle</span> <span id="shufv" class="mono">0</span><span class="bypass" aria-hidden="true">· STRAIGHT</span></div>
+          <input id="shuffle" type="range" min="0" max="6" step="1" value="0" aria-label="Shuffle amount, 0 to 6">
+          <div class="seg detents" id="detents" role="group" aria-label="Shuffle, 0 to 6"></div>
+        </div>
+        <div class="tplay">
+          <label class="tempo">Tempo <input id="bpm" type="range" min="60" max="160" value="90"><span id="bpmv" class="mono">90 bpm</span></label>
+          <button class="btn" id="play" aria-pressed="false"><svg viewBox="0 0 10 10"><path id="playIcon" d="M2 1l7 4-7 4z"/></svg><span>Play</span></button>
+          <button class="btn" id="ab" aria-pressed="false">Hear straight</button>
+        </div>
+      </div>
+    </div>
+    <div class="scroll"><svg id="bar" viewBox="0 0 1000 272" role="img" aria-label="One bar of the 4-bar pattern on six tracks. Click or drag to place hits."></svg></div>
+    <div class="legend">
+      <span><i style="background:var(--on)"></i>on the grid</span>
+      <span><i style="background:var(--late)"></i>pushed late</span>
+      <span><i style="background:var(--early)"></i>pulled early</span>
+      <span><i style="border:1.5px solid var(--ghost)"></i>where the straight 16th would be</span>
+      <span><i class="rolltick"></i>ratchets (Rolls)</span>
+      <span><i class="exttick"></i>step ratchets</span>
+      <span><i class="extnum">+7</i>step pitch</span>
+      <span><i style="border:1.5px dashed var(--muted)"></i>silenced by Linear</span>
+    </div>
+    <p class="hint">With Draw on HITS, click anywhere to place a hit on the nearest step, or hold and drag to draw several. Start on a hit to erase instead. Use the M button beside a track to mute it. Pick a Bar tab to write Kick and Snare in bars 2 to 4. RATCHET and PITCH edit the hits already there.</p>
+  </section>
+
+  <details class="card sources" id="bankCard">
+    <summary><span class="chev" aria-hidden="true"></span><span><b>Pattern banks</b> <span class="sum-sub">· program the module's banks and load them through its SD card</span></span></summary>
+    <div class="bankbody">
+    <div class="barhead"><span class="status" id="bankStatus"></span>
+      <div class="barctl">
+        <button class="sbtn save" id="bankPlay" type="button">Play bank on the grid</button>
+        <button class="dl" id="bankImport" title="Open PatternBank files from your Stolperbeats SD card. You can pick several at once.">Import from SD</button>
+        <button class="dl" id="bankNew" title="Start an empty bank on the first free bank number">New bank</button>
+        <button class="dl" id="bankDl" title="Save this bank as its PatternBank file, ready to copy to the SD card">Download bank</button>
+        <button class="dl" id="bankZip" title="Save every bank here as PatternBank files in one zip">Download all</button>
+        <input type="file" id="bankFile" accept=".txt,text/plain" multiple hidden>
+      </div>
+    </div>
+    <div class="bankrow" id="bankTabs" role="group" aria-label="Banks"></div>
+    <div class="trows" id="trows"></div>
+    <div class="slotbar" id="sendBar">
+      <button class="sbtn save" id="sendSketch">Send grid to bank</button>
+      <span class="kitlabel">Tracks</span><div class="trk" id="slotTracks" role="group" aria-label="Tracks to send"></div>
+      <button class="clear" id="sendUndo" hidden>Undo</button>
+    </div>
+    <p class="row-desc" id="bankMsg"></p>
+    <p class="hint">One row per track, each picking its own pattern: Kick and Snare (4 bars each), Hihat 1, Hihat 2, Perc 1 and Perc 2 (1 bar each). Click a tile to put that track on that pattern; Play bank on the grid puts the bank on the grid with a picker per track above it, and edits on the grid then go straight into the bank. Otherwise, Send writes the beat on the grid into this bank at the numbers the rows show.</p>
+    <details class="sdhelp">
+      <summary>Getting banks onto the module</summary>
+      <ol>
+        <li>Press Stop on Stolperbeats, then power off the rack. The module writes its data to the card when it stops, so never swap files while it's on.</li>
+        <li>Take out the SD card and copy every file on it to your computer as a backup.</li>
+        <li>Copy the downloaded PatternBank files into the same folder as the card's own PatternBank files, replacing any with the same name. PatternBank000 is Bank 1, PatternBank004 is Bank 5.</li>
+        <li>Put the card back and power on.</li>
+        <li>A bank number the module hasn't used yet starts switched off. Hold either Bank button for 2 seconds, turn the Kick encoder to the bank and click to switch it on.</li>
+      </ol>
+      <p>Each file holds 24 patterns per track: Kick and Snare 4 bars each, the hats and percs 1 bar. The files store hits only, no accents or velocity. Banks you import or build here are kept in this browser until you remove them.</p>
+    </details>
+    </div>
+  </details>
+
+  <section class="card" id="halfCard">
+    <div class="halfhead"><h2 id="halfTitle">Half a bar up close: the firmware's 8-step cycle</h2><p class="halfsub">Drag the dots left or right to make your own shuffle, then do the same for each Shuffle level. The grid below plays it as you go.</p></div>
+    <div class="clevels"><span class="reslabel">Shuffle level</span><div class="seg" id="cLevel" role="group" aria-label="Shuffle level you're editing"></div><span class="clinfo" id="cLevelInfo"></span></div>
+    <div class="scroll"><svg id="beat" viewBox="0 0 1000 150" role="img" aria-label="Half a bar divided into ticks with the eight step positions"></svg></div>
+    <p class="hint" id="beatnote"></p>
     <div class="tilerow" id="creatorrow" role="group" aria-label="Timing creator">
-      <div class="ctl-label">Timing creator
+      <div class="ctl-label">Your Timing
         <span class="cacts">
           <input id="cName" class="cname" maxlength="5" placeholder="NAME" aria-label="Name, up to 5 letters or numbers" spellcheck="false" autocomplete="off">
           <button class="dl" id="cSave">Save to visualiser</button>
@@ -431,119 +562,7 @@ a.dl{text-decoration:none;display:inline-block}
       </div>
       <p class="row-desc" id="cMsg"></p>
     </div>
-    <div class="knob" id="knob">
-      <div class="ctl-label"><span id="knobName">Shuffle</span> <span id="shufv" class="mono" style="color:var(--text)">0</span><span class="bypass" aria-hidden="true">· STRAIGHT</span></div>
-      <input id="shuffle" type="range" min="0" max="6" step="1" value="0" aria-label="Shuffle amount, 0 to 6">
-      <div class="detents" id="detents"></div>
-    </div>
-    <div class="side">
-      <label class="tempo">Tempo <input id="bpm" type="range" min="60" max="160" value="90"><span id="bpmv" class="mono">90 bpm</span></label>
-      <div class="row">
-        <button class="btn" id="play" aria-pressed="false"><svg viewBox="0 0 10 10"><path id="playIcon" d="M2 1l7 4-7 4z"/></svg><span>Play</span></button>
-        <button class="btn" id="ab" aria-pressed="false">Hear straight</button>
-      </div>
-    </div>
-    <div class="tilerow" id="feelrow">
-      <div class="ctl-label">Feel<span class="bypass" aria-hidden="true">· STRAIGHT</span></div>
-      <div class="feels" id="feels" role="group" aria-label="Feel"></div>
-      <p class="row-desc" id="feelDesc"></p>
-    </div>
-    <div class="readout" aria-live="polite">
-      <div><span class="ro-k">Timing</span><span class="ro-v" id="roMode"></span></div>
-      <div class="ro-desc"><span class="ro-k">What it does</span><span class="ro-v" id="roDesc"></span></div>
-      <div><span class="ro-k">Resolution</span><span class="ro-v mono" id="roRes"></span></div>
-      <div><span class="ro-k">Largest shift</span><span class="ro-v mono" id="roMax"></span></div>
-    </div>
-  </section>
-
-  <section class="card">
-    <div class="barhead"><h2 id="barTitle">Bar 1 of 4</h2><span class="status" id="status"></span>
-      <div class="barctl">
-        <div class="seg srcseg" id="srcSeg" role="group" aria-label="What the grid plays"><button data-src="sketch" aria-pressed="true" title="Presets and your own beat">SKETCH</button><button data-src="module" aria-pressed="false" title="Your pattern banks, picked like the module: a bank, then a pattern per track">MODULE</button></div>
-        <button class="dl" id="dlMidi" title="Download all 4 bars as a MIDI file: what plays, with the Timing, Shuffle, Feel, Rolls, and step ratchets and pitch. Muted tracks and hits Linear silences are left out.">Download MIDI</button>
-        <span class="kitlabel">Linear</span><div class="tiles" id="linear" role="group" aria-label="Linear"></div>
-        <span class="kitlabel">Kit</span><div class="seg" id="kits" role="group" aria-label="Drum kit"></div>
-      </div>
-    </div>
-    <p class="linear-desc" id="linearDesc" hidden></p>
-    <div class="pickers">
-      <fieldset class="presets">
-        <legend class="sr-only">Drum presets</legend>
-        <div class="beats" id="beats" role="group" aria-label="Drum presets"></div>
-      </fieldset>
-      <div class="mine-box">
-        <button class="mine" id="mine" aria-pressed="false">+ YOUR BEAT</button>
-        <button class="clear" id="clear">Clear your beat</button>
-      </div>
-    </div>
-    <div class="modstrip" id="modStrip" hidden></div>
-    <div class="barsel">
-      <span class="kitlabel">Bar</span>
-      <div class="bartabs" id="barTabs" role="group" aria-label="Bar shown on the grid"></div>
-      <label class="follow" title="While playing, the grid shows the bar that's playing. Pick a bar to stop following and edit it while the loop runs."><input type="checkbox" id="follow" checked> Follow</label>
-      <button class="dl" id="copyBar" title="Copy this bar's Kick and Snare to the other three bars">Copy to all bars</button>
-      <span class="barnote">Kick and Snare run 4 bars. Hats and Percs loop 1 bar under them.</span>
-    </div>
-    <div class="steptools">
-      <span class="kitlabel">Draw</span>
-      <div class="seg" id="toolSeg" role="group" aria-label="What a click on the grid edits"><button data-tool="hits" aria-pressed="true">HITS</button><button data-tool="ratchet" aria-pressed="false">RATCHET</button><button data-tool="pitch" aria-pressed="false">PITCH</button></div>
-      <span class="exptag" title="Ratchets and pitch are not on the module. They model a proposed firmware mod.">Experimental</span>
-      <span class="toolnote" id="toolNote"></span>
-    </div>
-    <div class="scroll"><svg id="bar" viewBox="0 0 1000 272" role="img" aria-label="One bar of the 4-bar pattern on six tracks. Click or drag to place hits."></svg></div>
-    <div class="legend">
-      <span><i style="background:var(--on)"></i>on the grid</span>
-      <span><i style="background:var(--late)"></i>pushed late</span>
-      <span><i style="background:var(--early)"></i>pulled early</span>
-      <span><i style="border:1.5px solid var(--ghost)"></i>where the straight 16th would be</span>
-      <span><i class="rolltick"></i>ratchets (Rolls)</span>
-      <span><i class="exttick"></i>step ratchets</span>
-      <span><i class="extnum">+7</i>step pitch</span>
-      <span><i style="border:1.5px dashed var(--muted)"></i>silenced by Linear</span>
-    </div>
-    <p class="hint">With Draw on HITS, click anywhere to place a hit on the nearest step, or hold and drag to draw several. Start on a hit to erase instead. Use the M button beside a track to mute it. Pick a Bar tab to write Kick and Snare in bars 2 to 4. RATCHET and PITCH edit the hits already there.</p>
-  </section>
-
-  <details class="card sources" id="bankCard">
-    <summary><span class="chev" aria-hidden="true"></span><span><b>Pattern banks</b> <span class="sum-sub">· program the module's banks and load them through its SD card</span></span></summary>
-    <div class="bankbody">
-    <div class="barhead"><span class="status" id="bankStatus"></span>
-      <div class="barctl">
-        <button class="dl" id="bankImport" title="Open PatternBank files from your Stolperbeats SD card. You can pick several at once.">Import from SD</button>
-        <button class="dl" id="bankNew" title="Start an empty bank on the first free bank number">New bank</button>
-        <button class="dl" id="bankDl" title="Save this bank as its PatternBank file, ready to copy to the SD card">Download bank</button>
-        <button class="dl" id="bankZip" title="Save every bank here as PatternBank files in one zip">Download all</button>
-        <input type="file" id="bankFile" accept=".txt,text/plain" multiple hidden>
-      </div>
-    </div>
-    <div class="bankrow" id="bankTabs" role="group" aria-label="Banks"></div>
-    <div class="trows" id="trows"></div>
-    <div class="slotbar" id="sendBar">
-      <button class="sbtn save" id="sendSketch">Send sketch to bank</button>
-      <span class="kitlabel">Tracks</span><div class="trk" id="slotTracks" role="group" aria-label="Tracks to send"></div>
-      <button class="clear" id="sendUndo" hidden>Undo</button>
-    </div>
-    <p class="row-desc" id="bankMsg"></p>
-    <p class="hint">One row per track, each picking its own pattern: Kick and Snare (4 bars each), Hihat 1, Hihat 2, Perc 1 and Perc 2 (1 bar each). Click a tile to put that track on that pattern; it's the same as turning its picker in the MODULE strip above the grid. In MODULE mode, edits on the grid go straight into the bank. In SKETCH mode, Send sketch writes the beat on the grid into this bank at the numbers the rows show.</p>
-    <details class="sdhelp">
-      <summary>Getting banks onto the module</summary>
-      <ol>
-        <li>Press Stop on Stolperbeats, then power off the rack. The module writes its data to the card when it stops, so never swap files while it's on.</li>
-        <li>Take out the SD card and copy every file on it to your computer as a backup.</li>
-        <li>Copy the downloaded PatternBank files into the same folder as the card's own PatternBank files, replacing any with the same name. PatternBank000 is Bank 1, PatternBank004 is Bank 5.</li>
-        <li>Put the card back and power on.</li>
-        <li>A bank number the module hasn't used yet starts switched off. Hold either Bank button for 2 seconds, turn the Kick encoder to the bank and click to switch it on.</li>
-      </ol>
-      <p>Each file holds 24 patterns per track: Kick and Snare 4 bars each, the hats and percs 1 bar. The files store hits only, no accents or velocity. Banks you import or build here are kept in this browser until you remove them.</p>
-    </details>
-    </div>
-  </details>
-
-  <section class="card" id="halfCard">
-    <div class="halfhead"><h2 id="halfTitle">Half a bar up close: the firmware's 8-step cycle</h2><span class="halfsub">Use this section to shape the grid above: drag the steps and the bar follows.</span></div>
-    <div class="scroll"><svg id="beat" viewBox="0 0 1000 150" role="img" aria-label="Half a bar divided into ticks with the eight step positions"></svg></div>
-    <p class="hint" id="beatnote"></p>
-    <table id="tbl"></table>
+    <details class="tblwrap" id="tblWrap" open><summary>All 7 levels as firmware rows</summary><table id="tbl"></table></details>
   </section>
 
   <section class="card fwlink" id="fwCard">
@@ -565,12 +584,12 @@ a.dl{text-decoration:none;display:inline-block}
       <p><b>Alt tables.</b> HOPP (MPC and Linn style 16th swing), DEEP (8ths and 16ths swinging at once), SQEZ (made in the creator: the "&amp;" and "a" squeeze toward the next beat), CLSTR (the "e", "&amp;" and "a" cluster on a tuplet grid, leaning late) and FOLD (every beat folds in toward the "&amp;"). Each is held in the module's own row format, whole ticks on 16 to 36 ticks per beat, so you can hear it here and then put it on a Timing button with the ULTRA flasher. DEEP, FOLD, CLSTR and SQEZ have run on a real module.</p>
       <p><b>Download tables.</b> The button by the Timings saves the selected alt table as a zip: its Stolperbeats-format rows, the step positions at 96 ticks per beat, and a one-bar MIDI groove per level for Ableton (right-click a clip, Extract Groove(s)). It's off for the four factory Timings. No firmware is included.</p>
       <p><b>Four bars.</b> Like the module, Kick and Snare run 4 bars (64 steps) and the hats and percs loop 1 bar (16 steps) under them. The Bar tabs pick which bar the grid shows and edits; each tab has a mini map of its Kick (top) and Snare (bottom). Follow keeps the grid on the bar that's playing; pick a tab while playing to stay on that bar and edit it while the loop runs. In bars 2 to 4 the hats and percs are dimmed because they're bar 1 repeating. Copy to all copies the shown bar's Kick and Snare into the other three.</p>
-      <p><b>SKETCH and MODULE.</b> The switch above the grid picks what it plays. SKETCH is the presets and your own beat. MODULE plays your pattern banks the way the module does: pick a Bank, then a pattern number for each of the six tracks. Edits go straight into the bank.</p>
-      <p><b>Pattern banks.</b> Import the PatternBank files from your Stolperbeats SD card, browse each track's 24 patterns, edit them in MODULE mode or send a SKETCH beat into a bank, and download the bank to copy onto the card. Files come out in exactly the module's own format, byte for byte. No banks are included with this page: bring your own from your card.</p>
+      <p><b>Drum loops and your own beat.</b> The Drum loops menu loads a preset groove, one bar long. Make your own beat clears the grid so you can draw one. Click a + bar tab to add bars, up to 4: Kick and Snare can change in each, and the hats and percs loop one bar under them. Play bank on the grid, in Pattern banks, plays your banks the way the module does: pick a Bank, then a pattern number for each of the six tracks. Edits go straight into the bank, and picking a drum loop takes you back.</p>
+      <p><b>Pattern banks.</b> Import the PatternBank files from your Stolperbeats SD card, browse each track's 24 patterns, play and edit them on the grid or send the grid's beat into a bank, and download the bank to copy onto the card. Files come out in exactly the module's own format, byte for byte. No banks are included with this page: bring your own from your card.</p>
       <p><b>Ratchets and pitch (experimental).</b> Not on the module today: this models a proposed firmware mod so you can hear it first. The Draw switch above the grid picks what a click edits. RATCHET gives a step 1 to 4 hits (2 is 32nds), placed on whole ticks inside the step the way the module would fire them, so they swing with the Timing. PITCH tunes a step up to 2 octaves up or down; on the module it would change the MIDI note only, since the trigger outs have no pitch. Rolls still owns Hihat 2, so its ratchets rest while Rolls is on. Both play here, export in Download MIDI, and save with your beat and your banks. A bank keeps them in a side file, PatternExtNNN.txt, so its PatternBank file stays exactly the module's format.</p>
       <p><b>Firmware lab.</b> Now the STOLPERBEATS ULTRA flasher, a separate page on the same site: give each Timing button a different table (factory, an alt table, or your own from the creator), add ratchets, pitch and fill mode, and flash it over USB. It never contains firmware. You bring the official file.</p>
       <p><b>Download MIDI.</b> The button above the grid saves all 4 bars exactly as they play, swing and all, so the groove survives on a straight DAW grid: every hit where the grid shows it, with the Timing, Shuffle, Feel and Rolls, step ratchets and pitch, accents as velocity, at the current tempo. Muted tracks and hits Linear silences are left out. It's four bars of GM drums (Kick 36, Snare 38, Hihat 1 42, Hihat 2 46, Perc 1 39, Perc 2 63) at 960 ticks per beat.</p>
-      <p><b>Creator.</b> The CREATOR switch at the top swaps the Timing row for a table maker, with the same grid, kits, Feels and playback. Start from a Timing or from straight, then drag the steps in the half-bar view while it plays. The Shuffle slider picks the level you're editing, and a level you haven't touched yet starts as a copy of the one before. Every Timing made here keeps to the module's rules: whole ticks, 16 to 36 ticks per beat in steps of 4, every step at least 1 tick, and the half bar's 8 lengths adding up to 2N. Save adds it to the alt tables, Export saves its 7 rows as a file, and Import loads one back. Saved Timings stay in this browser only, so export the ones you want to keep.</p>
+      <p><b>Creator.</b> The CREATOR switch at the top brings up the Timing creator just above the grid, with the same grid, kits, Feels and playback. Start from a Timing or from straight, then drag the steps while it plays. The Shuffle buttons pick the level you're editing, and a level you haven't touched yet starts as a copy of the one before. Every Timing made here keeps to the module's rules: whole ticks, 16 to 36 ticks per beat in steps of 4, every step at least 1 tick, and the half bar's 8 lengths adding up to 2N. Save adds it to the alt tables, Export saves its 7 rows as a file, and Import loads one back. Saved Timings stay in this browser only, so export the ones you want to keep.</p>
       <p>See Sources below for what's read from firmware and what's matched.</p>
     </div>
   </details>
@@ -700,12 +719,16 @@ function fitPattern(p){
 }
 let custom=emptyPattern();
 try{ const saved=fitPattern(JSON.parse(localStorage.getItem(STORE))); if(saved) custom=saved; }catch(e){}
-function saveCustom(){ try{ localStorage.setItem(STORE,JSON.stringify(custom));
+function saveCustom(){ try{ localStorage.setItem(STORE,JSON.stringify(custom)); localStorage.setItem(STORE+":bars",String(customN));
   localStorage.setItem(STORE+":ext",JSON.stringify(Object.fromEntries(LANES.filter(L=>hasExt(custom[L.key])).map(L=>[L.key,extJSON(custom[L.key])])))); }catch(e){} }
 // data holds the full tracks. pattern is a 16-step window onto them for one bar (barCtx): Kick and Snare show
 // that bar's 16 steps, the 1-bar tracks always show their one bar. Everything that reads pattern[lane][k]
 // (grid, Linear, Feels, Rolls, playback) works on whichever bar barCtx points at.
 let data={}, pattern={}, beatIdx=0, edited=false, barCtx=0, viewBar=0;
+// How many bars loop: a drum loop starts at 1, the + tabs add bars up to 4. A pattern bank always plays all 4.
+let nBars=1, customN=1;
+try{ customN=Math.min(BARS,Math.max(1,parseInt(localStorage.getItem(STORE+":bars"))||1)); }catch(e){}
+const loopBars=()=>beatIdx===MODSRC?BARS:nBars;
 // Set by anything that changes what plays (Timing, Shuffle, Feel, Linear, tempo, the grid, MODULE picks). While playing,
 // the scheduler picks it up within one tick and replans the rest of the current bar, so changes land straight away.
 let replanDue=false;
@@ -753,8 +776,8 @@ try{ const x=JSON.parse(localStorage.getItem(STORE+":ext"))||{}; for(const L of 
 const MODSRC=CUSTOM+1;
 function loadBeat(i){
   beatIdx=i; edited=false;
-  if(i===CUSTOM) data=custom; // edits write straight into the saved slot
-  else { data={}; for(const L of LANES) data[L.key]=toArr(BEATS[i][L.key],laneLen(L.key)); }
+  if(i===CUSTOM){ data=custom; nBars=customN; } // edits write straight into the saved slot
+  else { data={}; for(const L of LANES) data[L.key]=toArr(BEATS[i][L.key],laneLen(L.key)); nBars=1; }
   bindPattern();
 }
 const beatName=()=>beatIdx===CUSTOM?"your beat":beatIdx===MODSRC?modName():BEATS[beatIdx].name;
@@ -1068,7 +1091,7 @@ function drawHalf(){
   const nt=el("text",{x:BXh(N/2),y:22,"text-anchor":"middle",fill:css("muted"),"font-size":12},beat); nt.textContent=`${N} ticks per beat`;
   const name=state.timing==="DRAFT"?(draft.name||"your draft"):state.timing;
   document.getElementById("halfTitle").textContent=state.creator
-    ?(s?`Timing creator: level ${s} on a ${N}-tick beat`:"Timing creator: level 0 is always straight")
+    ?"Timing creator"
     :isTable(state.timing)?`Half a bar up close: ${name} on a ${N}-tick beat`:"Half a bar up close: the firmware's 8-step cycle";
   beat.classList.toggle("editing",state.creator&&s>0);
   const lens=rowsOf(state.timing)[s].stepLengths.slice(0,8).join(", ");
@@ -1134,7 +1157,7 @@ function update(){
   document.getElementById("knobName").textContent=state.creator?"Shuffle level":"Shuffle";
   document.getElementById("timingDesc").textContent=TIMINGS.find(t=>t.key===state.timing).desc;
   document.getElementById("shufv").textContent=state.shuffle;
-  document.querySelectorAll("#detents span").forEach((d,i)=>d.classList.toggle("on",i===state.shuffle));
+  document.querySelectorAll("#detents button").forEach((d,i)=>{ d.classList.toggle("on",i===state.shuffle); d.setAttribute("aria-pressed",String(i===state.shuffle)); });
   document.querySelectorAll("#timing [data-timing]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.timing===state.timing)));
   drawDl();
   if(state.creator) drawCreator();
@@ -1163,7 +1186,7 @@ function drawDl(){
   b.disabled=!ok; b.title=ok?`Download ${state.timing} as Stolperbeats rows and MIDI grooves (zip)`:isMine(state.timing)?"Your own Timings export from the creator: pick it in Start from, then Export":"The factory Timings aren't included";
 }
 const det=document.getElementById("detents"), shuffleIn=document.getElementById("shuffle");
-for(let i=0;i<=6;i++){ const s=document.createElement("span"); s.textContent=i; s.addEventListener("click",()=>{ shuffleIn.value=i; state.shuffle=i; update(); }); det.appendChild(s); }
+for(let i=0;i<=6;i++){ const s=document.createElement("button"); s.type="button"; s.textContent=i; s.title=i?`Shuffle ${i}`:"Shuffle 0: straight"; s.addEventListener("click",()=>{ shuffleIn.value=i; state.shuffle=i; update(); }); det.appendChild(s); }
 shuffleIn.addEventListener("input",e=>{ state.shuffle=+e.target.value; update(); });
 document.getElementById("bpm").addEventListener("input",e=>{ state.bpm=+e.target.value; replanDue=true; document.getElementById("bpmv").textContent=state.bpm+" bpm"; drawHalf(); readout(); });
 document.getElementById("ab").addEventListener("click",e=>{
@@ -1210,16 +1233,20 @@ for(const k of Object.keys(KITS)){ const b=document.createElement("button"); b.t
   b.addEventListener("click",()=>{ state.kit=k; drawKits(); drawBar(); ensureAudio(); voice("BD",ctx.currentTime+0.01,0); }); kWrap.appendChild(b); }
 function drawKits(){ kWrap.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.kit===state.kit))); }
 
-const bWrap=document.getElementById("beats"), mineBtn=document.getElementById("mine"), clearBtn=document.getElementById("clear");
-BEATS.forEach((b,i)=>{ const btn=document.createElement("button"); btn.className="bbtn"; btn.innerHTML=`<span class="n">${i+1}</span>${b.name}`;
-  btn.addEventListener("click",()=>{ loadBeat(i); drawBeats(); drawBar(); drawBanks(); }); bWrap.appendChild(btn); });
-mineBtn.addEventListener("click",()=>{ loadBeat(CUSTOM); drawBeats(); drawBar(); drawBanks(); });
-clearBtn.addEventListener("click",()=>{ for(const L of LANES){ custom[L.key].fill(0); setExtJSON(custom[L.key],null); } saveCustom(); loadBeat(CUSTOM); drawBeats(); drawBar(); drawBanks(); });
+// Drum loops menu, and Make your own beat (clears the grid into your own saved beat)
+const loopSel=document.getElementById("loopSel"), mineBtn=document.getElementById("mine");
+function afterLoad(){ replanDue=true; if(viewBar>=loopBars()) setViewBar(0); else drawBar(); drawBeats(); drawBanks(); }
+loopSel.addEventListener("change",()=>{ const v=loopSel.value; if(v==="bank") return;
+  if(srcMode==="module") setSource("sketch"); loadBeat(v==="mine"?CUSTOM:+v); afterLoad(); });
+mineBtn.addEventListener("click",()=>{
+  if(srcMode==="module") setSource("sketch");
+  for(const L of LANES){ custom[L.key].fill(0); setExtJSON(custom[L.key],null); } customN=1; saveCustom(); loadBeat(CUSTOM); afterLoad(); });
 function drawBeats(){
-  bWrap.querySelectorAll(".bbtn").forEach((b,i)=>b.setAttribute("aria-pressed",String(i===beatIdx)));
-  mineBtn.setAttribute("aria-pressed",String(beatIdx===CUSTOM));
-  clearBtn.style.visibility=beatIdx===CUSTOM?"visible":"hidden";
   const count=LANES.reduce((n,L)=>n+custom[L.key].reduce((a,b)=>a+b,0),0);
+  loopSel.innerHTML=BEATS.map((b,i)=>`<option value="${i}">${i+1}. ${b.name}</option>`).join("")
+    +(count||beatIdx===CUSTOM?`<option value="mine">Your beat</option>`:"")+(beatIdx===MODSRC?`<option value="bank">Pattern bank</option>`:"");
+  loopSel.value=beatIdx===CUSTOM?"mine":beatIdx===MODSRC?"bank":String(beatIdx);
+  mineBtn.setAttribute("aria-pressed",String(beatIdx===CUSTOM&&!count));
   document.getElementById("status").textContent=beatIdx===CUSTOM
     ? (count?`· your beat, ${count} hit${count>1?"s":""}, saved in this browser`:"· your beat is empty. Click or drag on the grid to add hits")
     : beatIdx===MODSRC?`· ${beatName()}, edits save into the bank`
@@ -1235,27 +1262,43 @@ const tabBtns=[...Array(BARS).keys()].map(b=>{
   btn.innerHTML=`<span>${b+1}</span><svg width="48" height="11" viewBox="0 0 48 11" aria-hidden="true"></svg>`;
   const svg=btn.querySelector("svg"); btn.marks={BD:[],SD:[]};
   ["BD","SD"].forEach((l,r)=>{ for(let k=0;k<16;k++) btn.marks[l].push(el("rect",{x:k*3,y:r*6,width:2,height:4,rx:.5,class:"mk"},svg)); });
-  btn.addEventListener("click",()=>{ if(playing){ followIn.checked=false; } setViewBar(b); });
+  btn.addEventListener("click",()=>{ if(b>=loopBars()){ setBars(b+1); return; } if(playing){ followIn.checked=false; } setViewBar(b); });
   tabsWrap.appendChild(btn); return btn;
 });
 function drawBarTabs(){
+  const n=loopBars();
   tabBtns.forEach((btn,b)=>{
-    btn.setAttribute("aria-pressed",String(b===viewBar));
+    const add=b>=n; btn.classList.toggle("addbar",add); btn.firstChild.textContent=add?`+ ${b+1}`:`${b+1}`;
+    btn.setAttribute("aria-label",add?`Add bar ${b+1}`:`Bar ${b+1}`); btn.title=add?`Add bar ${b+1} (starts as a copy of bar ${n})`:"";
+    btn.setAttribute("aria-pressed",String(b===viewBar&&!add));
     btn.classList.toggle("playing",b===playBar);
     for(const l of ["BD","SD"]) btn.marks[l].forEach((m,k)=>m.classList.toggle("on",!!data[l][b*16+k]));
   });
-  document.getElementById("barTitle").textContent=`Bar ${viewBar+1} of ${BARS}`;
-  document.getElementById("copyBar").textContent=`Copy bar ${viewBar+1} to all`;
+  document.getElementById("barTitle").textContent=`Bar ${viewBar+1} of ${n}`;
+  document.getElementById("copyBar").textContent=`Copy bar ${viewBar+1} to all`; document.getElementById("copyBar").hidden=n<2;
+  const rm=document.getElementById("rmBar"); rm.hidden=n<2||beatIdx===MODSRC; rm.textContent=`Remove bar ${n}`;
   bar.playhead.setAttribute("opacity",playBar<0||playBar===viewBar?1:.25);
 }
+// Add bars (each new one starts as a copy of the bar before it) or drop the last one.
+function setBars(n){
+  n=Math.max(1,Math.min(BARS,n)); if(beatIdx===MODSRC||n===nBars) return;
+  for(let b=nBars;b<n;b++) for(const l of LONG){ const a=data[l];
+    for(let k=0;k<16;k++) a[b*16+k]=a[(b-1)*16+k];
+    if(a.x) for(const key of ["r","p"]) for(let k=0;k<16;k++) a.x[key][b*16+k]=a.x[key][(b-1)*16+k]; }
+  const grew=n>nBars; nBars=n; replanDue=true;
+  if(beatIdx===CUSTOM){ customN=n; saveCustom(); }
+  if(grew){ if(playing) followIn.checked=false; setViewBar(n-1); } else if(viewBar>=n) setViewBar(n-1); else drawBar();
+}
+document.getElementById("rmBar").addEventListener("click",()=>setBars(nBars-1));
 function setViewBar(b){
   if(b===viewBar) return drawBarTabs();
   viewBar=barCtx=b; setHover(null);
   target=computeTargets(); shown=cloneT(target); drawBar(); // Slop's hats and Linear depend on this bar's Kick and Snare
 }
 document.getElementById("copyBar").addEventListener("click",()=>{
-  for(const l of LONG){ const a=data[l], src=a.slice(viewBar*16,viewBar*16+16); for(let b=0;b<BARS;b++) if(b!==viewBar) src.forEach((v,k)=>a[b*16+k]=v);
-    if(a.x) for(const key of ["r","p"]){ const xs=a.x[key].slice(viewBar*16,viewBar*16+16); for(let b=0;b<BARS;b++) if(b!==viewBar) xs.forEach((v,k)=>a.x[key][b*16+k]=v); } }
+  const n=loopBars();
+  for(const l of LONG){ const a=data[l], src=a.slice(viewBar*16,viewBar*16+16); for(let b=0;b<n;b++) if(b!==viewBar) src.forEach((v,k)=>a[b*16+k]=v);
+    if(a.x) for(const key of ["r","p"]){ const xs=a.x[key].slice(viewBar*16,viewBar*16+16); for(let b=0;b<n;b++) if(b!==viewBar) xs.forEach((v,k)=>a.x[key][b*16+k]=v); } }
   if(beatIdx===CUSTOM) saveCustom(); else if(beatIdx===MODSRC) bankEdited(); else edited=true;
   drawBeats(); drawBar();
 });
@@ -1340,7 +1383,6 @@ try{ const s=JSON.parse(localStorage.getItem(BANK_STORE))||{};
   selBank=banks.has(s.sel)?s.sel:banks.size?Math.min(...banks.keys()):null;
   if(s.ptn){ const old={H1:"H",H2:"H",P1:"P",P2:"P"}; // saves from when Hihat 1+2 and Perc 1+2 shared a number
     for(const G of GROUPS){ const v=s.ptn[G.g]??s.ptn[old[G.g]]; if(Number.isInteger(v)&&v>=0&&v<PTNS) modSel[G.g]=v; } }
-  if(s.src==="module"&&selBank!==null) srcMode="module";
 }catch(e){}
 function saveBanks(){
   try{ localStorage.setItem(BANK_STORE,JSON.stringify({sel:selBank,ptn:modSel,src:srcMode,banks:Object.fromEntries([...banks].map(([n,b])=>[n,writeBank(b)])),
@@ -1366,7 +1408,7 @@ function bindModule(){ const b=banks.get(selBank); data=Object.fromEntries(LANES
 function refreshGrid(){ target=computeTargets(); shown=cloneT(target); drawBar(); drawBeats(); }
 function bankEdited(){ saveBanks(); drawBanks(); } // a grid edit in MODULE mode changed the bank
 function setSource(m){
-  if(m==="module"&&!banks.size){ srcMode="sketch"; drawModule(); openBanks(); bankMsg("Import your PatternBank files or start a new bank, then switch to MODULE.",true); return; }
+  if(m==="module"&&!banks.size){ srcMode="sketch"; drawModule(); openBanks(); bankMsg("Import your PatternBank files or start a new bank first.",true); return; }
   if(m===srcMode) return;
   if(m==="module"){
     sketch={idx:beatIdx,data,edited}; srcMode="module"; beatIdx=MODSRC; edited=false;
@@ -1421,8 +1463,8 @@ stripEmpty.querySelector('[data-a=new]').addEventListener("click",()=>document.g
 modStrip.append(stripBody,stripEmpty);
 function drawModule(){
   const mod=srcMode==="module";
-  document.querySelectorAll("#srcSeg button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.src===srcMode)));
-  document.querySelector(".pickers").hidden=mod; modStrip.hidden=!mod;
+  const bp=document.getElementById("bankPlay"); bp.textContent=mod?"Stop playing bank":"Play bank on the grid"; bp.setAttribute("aria-pressed",String(mod));
+  modStrip.hidden=!mod;
   const has=selBank!==null&&banks.has(selBank);
   stripBody.style.display=has?"contents":"none"; stripEmpty.style.display=has?"none":"";
   if(!has) return;
@@ -1433,7 +1475,7 @@ function drawModule(){
     v.title=`${G.name}: pattern ${sh[G.g]+1} (PTN${sh[G.g]} in the file)${G.lanes.length>1?`, ${G.lanes.map(laneName).join(" and ")} together`:""}`; }
   modNote.textContent="Edits on the grid save into the bank";
 }
-document.querySelectorAll("#srcSeg button").forEach(b=>b.addEventListener("click",()=>setSource(b.dataset.src)));
+document.getElementById("bankPlay").addEventListener("click",()=>{ setSource(srcMode==="module"?"sketch":"module"); if(viewBar>=loopBars()) setViewBar(0); });
 
 // ----- Pattern banks panel -----
 const bankCard=document.getElementById("bankCard");
@@ -1449,7 +1491,7 @@ for(const G of GROUPS){
     const b=document.createElement("button"); b.className="ptile"; b.type="button";
     b.innerHTML=`<span>${p+1}</span><svg viewBox="0 0 64 7" preserveAspectRatio="none" aria-hidden="true"><rect class="bg" x="0" y="0" width="64" height="7"/><path class="on"/></svg>`;
     b.path=b.querySelector("path.on");
-    b.addEventListener("click",()=>{ selectMod({[G.g]:p}); bankMsg(srcMode==="module"?"":`${G.name} set to pattern ${p+1}. Switch to MODULE to hear it, or Send sketch to write there.`); });
+    b.addEventListener("click",()=>{ selectMod({[G.g]:p}); bankMsg(srcMode==="module"?"":`${G.name} set to pattern ${p+1}. Play bank on the grid to hear it, or Send to write there.`); });
     wrap.appendChild(b); return b;
   });
   document.getElementById("trows").appendChild(row);
@@ -1493,7 +1535,7 @@ function drawBanks(){
       t.setAttribute("aria-pressed",String(p===modSel[G.g]));
       t.setAttribute("aria-label",`${G.name} pattern ${p+1}${d?"":", empty"}`); t.title=`${G.name} pattern ${p+1} (PTN${p} in the file)`;
     });
-    document.getElementById("sendSketch").textContent=`Send sketch to Bank ${selBank+1}`;
+    document.getElementById("sendSketch").textContent=`Send grid to Bank ${selBank+1}`;
     document.getElementById("sendSketch").title=`Writes the ticked tracks into Bank ${selBank+1} at ${selList()}`;
   }
   document.querySelectorAll("#slotTracks button").forEach(b=>b.setAttribute("aria-pressed",String(trackPick[b.dataset.k])));
@@ -1511,9 +1553,10 @@ document.getElementById("sendSketch").addEventListener("click",()=>{
   if(selBank===null||srcMode==="module") return;
   const b=banks.get(selBank), ks=picked();
   undoSend={bank:selBank,lanes:Object.fromEntries(ks.map(k=>{ const a=b[k][modSel[groupOf[k]]]; return [k,{p:modSel[groupOf[k]],was:a.slice(),wasX:extJSON(a)}]; }))};
-  for(const k of ks){ const a=b[k][modSel[groupOf[k]]]; a.splice(0,a.length,...data[k]); copyExt(data[k],a); }
+  for(const k of ks){ const a=b[k][modSel[groupOf[k]]]; a.splice(0,a.length,...data[k]); copyExt(data[k],a);
+    const L=nBars*16; if(a.length>L){ for(let i=L;i<a.length;i++) a[i]=a[i%L]; if(a.x) for(const key of ["r","p"]) for(let i=L;i<a.length;i++) a.x[key][i]=a.x[key][i%L]; } }
   saveBanks(); drawBanks();
-  bankMsg(`Sent ${ks.length===LANES.length?"the sketch":andList(ks.map(laneName))} to Bank ${selBank+1}: ${[...new Set(ks.map(k=>groupOf[k]))].map(g=>{ const G=GROUPS.find(x=>x.g===g); return `${G.name} ${modSel[g]+1}`; }).join(", ")}. Download the bank to put it on the card.`);
+  bankMsg(`Sent ${ks.length===LANES.length?"the grid":andList(ks.map(laneName))} to Bank ${selBank+1}: ${[...new Set(ks.map(k=>groupOf[k]))].map(g=>{ const G=GROUPS.find(x=>x.g===g); return `${G.name} ${modSel[g]+1}`; }).join(", ")}. Download the bank to put it on the card.`);
 });
 document.getElementById("sendUndo").addEventListener("click",()=>{
   if(!undoSend||!banks.has(undoSend.bank)) return;
@@ -1678,7 +1721,7 @@ function schedule(){
     if(evI>=cur.list.length){
       const last=bars[bars.length-1], next=last.start+last.dur;
       if(next>horizon) break;
-      cur=barEvents((last.bar+1)%BARS); evI=0; bars.push(newBar(next,cur.dur,cur.bar)); if(bars.length>4) bars.shift(); continue;
+      cur=barEvents((last.bar+1)%loopBars()); evI=0; bars.push(newBar(next,cur.dur,cur.bar)); if(bars.length>4) bars.shift(); continue;
     }
     const B=bars[bars.length-1], e=cur.list[evI], t=B.start+e.t;
     if(t>horizon) break;
@@ -1734,8 +1777,8 @@ const GM={BD:36,SD:38,H1:42,H2:46,P1:39,P2:63};
 // Feel, Hear straight), Rolls ratchets, step ratchets and pitch, accents as velocity. Muted tracks and Linear-silenced hits are left out.
 function gridMidi(){
   // All 4 bars: Kick and Snare as written in each bar, the 1-bar tracks repeated under them.
-  const PPQ=960, BAR1=4*PPQ, BAR=BARS*BAR1, spb=60/state.bpm;
-  const ev=[...Array(BARS).keys()].flatMap(b=>barEvents(b).list.filter(e=>!muted[e.lane]).map(e=>({
+  const NB=loopBars(), PPQ=960, BAR1=4*PPQ, BAR=NB*BAR1, spb=60/state.bpm;
+  const ev=[...Array(NB).keys()].flatMap(b=>barEvents(b).list.filter(e=>!muted[e.lane]).map(e=>({
     // a hit dragged past a bar line (Flam late in the bar at fast tempos) lands in the next bar, and past bar 4 wraps to the top
     at:((b*BAR1+Math.round(e.t/spb*PPQ))%BAR+BAR)%BAR, note:Math.max(0,Math.min(127,GM[e.lane]+(e.semi||0))),
     vel:Math.max(1,Math.min(127,Math.round(115*(e.roll?0.75:e.lvl??accentOf(e.k)))))})));
@@ -2073,6 +2116,8 @@ function drawCreator(){
   const N=resolved(s).N;
   cGrid.querySelectorAll("button").forEach(b=>{ b.setAttribute("aria-pressed",String(s>0&&+b.dataset.n===N)); b.disabled=!s; });
   document.getElementById("cCopy").disabled=!s;
+  cLevel.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",String(+b.dataset.v===s)));
+  document.getElementById("cLevelInfo").textContent=s?`Level ${s} · ${N} ticks per beat · steps 1 and 5 stay put`:"Level 0 is always straight";
   document.getElementById("cDelete").hidden=!mineKeys().includes(cleanName(cName.value));
   document.getElementById("cSave").textContent=mineKeys().includes(cleanName(cName.value))?"Update in visualiser":"Save to visualiser";
   const ok=draftRows().every(rowOk), notes=draftNotes(), badge=document.getElementById("cBadge");
@@ -2084,11 +2129,11 @@ function drawCreator(){
   if(cMsg.dataset.flash) return;
   cMsg.className="row-desc"+(notes.length?" warn":"");
   cMsg.textContent=notes.length?`Notes: ${notes.join("; ")}.`
-    :s?"Drag steps 2 to 4 and 6 to 8 in the half-bar view below. Each new level starts as a copy of the one before."
-    :"Level 0 is straight on every Timing. Move the Shuffle slider to 1 to 6 to edit a level.";
+    :s?"Each new level starts as a copy of the one before."
+    :"Level 0 is straight on every Timing. Pick a level, 1 to 6, to edit it.";
 }
 function mineNote(s,N){
-  if(!s) return (state.creator?"Level 0 is straight 16ths on a 16-tick beat, on every Timing. Move the Shuffle slider to 1 to 6 to edit a level."
+  if(!s) return (state.creator?"Level 0 is straight 16ths on a 16-tick beat, on every Timing. Pick a level, 1 to 6, to edit it."
     :"Straight 16ths on a 16-tick beat. Every step plays on its straight 16th.")+feelNote();
   const c=MODULE[state.timing][s-1][1], p=c.length===8?c:c.concat(c.map(x=>x+N)), lens=p.map((x,k)=>(k<7?p[k+1]:2*N)-x).join(", ");
   return `Each mark is one tick of a ${N}-tick beat, and the taller marks are its ${N/4} slots of 4 ticks. Numbers under the dots are the tick each step fires on. Step lengths: ${lens}.`+
@@ -2103,8 +2148,15 @@ function creatorTable(){
   return h;
 }
 
+// Shuffle level picker in the creator (the Shuffle slider is hidden there)
+const cLevel=document.getElementById("cLevel");
+for(let v=1;v<=6;v++){ const b=document.createElement("button"); b.textContent=v; b.dataset.v=v; b.title=`Edit Shuffle level ${v}`;
+  b.addEventListener("click",()=>{ state.shuffle=v; update(); }); cLevel.appendChild(b); }
+
 // VISUALISER | CREATOR
+// In the creator the half-bar card is the Timing creator and sits just above the grid; back in the visualiser it returns to its place.
 const modeBtns=document.querySelectorAll("#modeSw button");
+const halfCard=document.getElementById("halfCard"), gridCard=document.getElementById("barTitle").closest("section"), halfHome=document.getElementById("fwCard"), halfLabel=halfCard.dataset.bxLabel;
 function setCreator(on){
   if(on===state.creator) return;
   if(on){
@@ -2116,6 +2168,9 @@ function setCreator(on){
     state.timing=savedHere&&TIMINGS.some(t=>t.key===savedHere)?savedHere:TIMINGS.some(t=>t.key===prevTiming)?prevTiming:"Trip";
   }
   document.body.classList.toggle("creating",on);
+  if(on){ gridCard.before(halfCard); if(halfLabel) halfCard.dataset.bxLabel="Timing creator"; }
+  else { halfHome.before(halfCard); if(halfLabel) halfCard.dataset.bxLabel=halfLabel; }
+  document.getElementById("tblWrap").open=!on;
   modeBtns.forEach(b=>b.setAttribute("aria-pressed",String((b.dataset.mode==="1")===on)));
   update();
 }
