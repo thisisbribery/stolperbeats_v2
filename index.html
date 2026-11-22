@@ -295,9 +295,14 @@ main{padding-top:14px}
 .timings{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
 .timings .lampbtn{height:28px;padding:0 2px}
 .timings .alt{--lamp:#45c472} .timings .mine{--lamp:var(--mine)}
-.tmore{appearance:none;-webkit-appearance:none;text-align:center;text-align-last:center;
-  background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);
-  background-position:calc(100% - 11px) 50%,calc(100% - 7px) 50%;background-size:4px 4px;background-repeat:no-repeat;padding-right:14px!important}
+/* last slot: the button plays the slot's Timing (FOLD to start), the arrow beside it picks another */
+.tslot{display:flex;gap:3px;min-width:0}
+.tslot .lampbtn{flex:1 1 auto;min-width:0}
+.tmore{--arr:var(--accent);appearance:none;-webkit-appearance:none;flex:0 0 22px;width:22px;height:28px;padding:0;margin:0;cursor:pointer;
+  color:transparent;border:1px solid var(--arr);border-radius:6px;background-color:transparent;
+  background-image:linear-gradient(45deg,transparent 50%,var(--arr) 50%),linear-gradient(135deg,var(--arr) 50%,transparent 50%);
+  background-position:calc(50% - 3px) 55%,calc(50% + 3px) 55%;background-size:6px 6px;background-repeat:no-repeat}
+.tmore:hover{background-color:color-mix(in srgb,var(--arr) 18%,transparent)}
 .tmore option,.tmore optgroup{background:var(--panel);color:var(--text);font-weight:600}
 /* Feel: a menu whose closed face is the lit Feel tab; open it for the four tabs and the Timing readout */
 .feelpick{position:relative}
@@ -1169,8 +1174,8 @@ function update(){
   document.getElementById("knobName").textContent=state.creator?"Shuffle level":"Shuffle";
   document.getElementById("shufv").textContent=state.shuffle;
   document.querySelectorAll("#detents button").forEach((d,i)=>{ d.classList.toggle("on",i===state.shuffle); d.setAttribute("aria-pressed",String(i===state.shuffle)); });
-  document.querySelectorAll("#timing [data-timing]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.timing===state.timing)));
   drawMore();
+  document.querySelectorAll("#timing [data-timing]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.timing===state.timing)));
   drawDl();
   if(state.creator) drawCreator();
   drawFeels(); drawSlots(); retarget(); drawHalf(); readout();
@@ -1180,9 +1185,12 @@ function update(){
 // Two rows of four: the module's four Timings, then the alt tables. The last slot is a menu holding the rest
 // of the alt tables and your own Timings from the creator.
 const tWrap=document.getElementById("timing"), IN_MORE=new Set(["CLSTR","FOLD"]);
-const tMore=document.createElement("select"); tMore.className="lampbtn tmore alt"; tMore.setAttribute("aria-label","More timings: the other alt tables and your own");
-tMore.innerHTML='<option value="" hidden>MORE</option><optgroup label="Alt tables"></optgroup><optgroup label="Yours" hidden></optgroup>';
+const tMore=document.createElement("select"); tMore.className="tmore"; tMore.setAttribute("aria-label","More timings: the other alt tables and your own"); tMore.title="More timings";
+tMore.innerHTML='<option value="" hidden></option><optgroup label="Alt tables"></optgroup><optgroup label="Yours" hidden></optgroup>';
 const [moreAlt,moreMine]=tMore.querySelectorAll("optgroup");
+const tSlot=document.createElement("div"), tSlotBtn=document.createElement("button"); tSlot.className="tslot";
+tSlotBtn.setAttribute("aria-pressed","false"); tSlotBtn.addEventListener("click",()=>{ state.timing=tSlotBtn.dataset.timing; update(); });
+tSlot.append(tSlotBtn,tMore);
 tMore.addEventListener("change",()=>{ if(tMore.value){ state.timing=tMore.value; update(); } });
 function addTimingButton(t){
   if(t.mine||IN_MORE.has(t.key)){
@@ -1193,14 +1201,22 @@ function addTimingButton(t){
   b.addEventListener("click",()=>{ state.timing=t.key; update(); });
   tWrap.appendChild(b); return b;
 }
-function removeTimingButton(key){ tMore.querySelector(`option[value="${key}"]`)?.remove(); moreMine.hidden=!moreMine.children.length; }
+function setSlot(key){
+  const t=TIMINGS.find(x=>x.key===key);
+  tSlotBtn.dataset.timing=key; tSlotBtn.textContent=key.toUpperCase(); tSlotBtn.title=t.desc;
+  tSlotBtn.className="lampbtn "+(t.mine?"mine":"alt");
+}
+function removeTimingButton(key){
+  tMore.querySelector(`option[value="${key}"]`)?.remove(); moreMine.hidden=!moreMine.children.length;
+  if(tSlotBtn.dataset.timing===key) setSlot("FOLD");
+}
 for(const t of TIMINGS) addTimingButton(t);
-tWrap.appendChild(tMore);
+tWrap.appendChild(tSlot); setSlot("FOLD");
+// The slot shows the last Timing picked from the arrow menu, so it stays one click away.
 function drawMore(){
   const inMore=!!tMore.querySelector(`option[value="${state.timing}"]`);
-  tMore.value=inMore?state.timing:""; tMore.classList.toggle("on",inMore);
-  tMore.classList.toggle("mine",inMore&&isMine(state.timing)); tMore.classList.toggle("alt",!(inMore&&isMine(state.timing)));
-  tMore.title=inMore?TIMINGS.find(x=>x.key===state.timing).desc:"More timings: the other alt tables and your own";
+  if(inMore) setSlot(state.timing);
+  tMore.value=inMore?state.timing:"";
 }
 // Download tables covers the selected alt table only, not the four factory Timings.
 function drawDl(){
